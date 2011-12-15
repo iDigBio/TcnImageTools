@@ -1,0 +1,47 @@
+<?php 
+//Base folder containing herbarium folder ; read access needed
+$sourcePathBase = '';
+//Folder where images are to be placed; write access needed
+$targetPathBase = '';
+//Url base needed to build image URL that will be save in DB
+$imgUrlBase = '';
+//Path to where log files will be placed
+$logPath = '';
+//If silent is set, script will produce no non-fatal output.
+$silent = 1;
+
+//pmterm = Pattern matching terms used to locate primary key (PK) of specimen record
+//ex: '/(ASU\d{7})/'; '/(UTC\d{8})/'
+$collArr = array(
+        'duke:lichens' => array('pmterm' => '/^(\d{7})/', 'collid' => 28),
+        'mich:bryophytes' => array('pmterm' => '/(5\d{5})/', 'collid' => 7),
+        'ny:lichens' => array('pmterm' => '/^(NY\d{8})/', 'collid' => 2),
+);
+
+//If record matching PK is not found, should a new blank record be created?
+$createNewRec = 1;
+//Weather to copyover images with matching names (includes path) or rename new image and keep both
+$copyOverImg = 1;
+
+$webPixWidth = 800;
+$tnPixWidth = 130;
+$lgPixWidth = 2000;
+
+//Whether to use ImageMagick for creating thumbnails and web images. ImageMagick must be installed on server.
+// 0 = use GD library (default), 1 = use ImageMagick
+$useImageMagick = 0;
+//Value between 0 and 100
+$jpgCompression = 80;
+
+//Create thumbnail versions of image
+$createTnImg = 1;
+//Create large version of image, given source image is large enough
+$createLgImg = 1;
+$keepOrig = 1;
+
+//0 = write image metadata to file; 1 = write metadata to Symbiota database
+$dbMetadata = 1;
+
+$dbHost="";
+$dbUser="";
+$dbPass="";
