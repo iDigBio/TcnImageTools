@@ -13,6 +13,7 @@ $silent = 1;
 //pmterm = Pattern matching terms used to locate primary key (PK) of specimen record
 //ex: '/(ASU\d{7})/'; '/(UTC\d{8})/'
 $collArr = array(
+        'duke:bryophytes' => array('pmterm' => '/^(\d{7})/', 'collid' => 6),
         'duke:lichens' => array('pmterm' => '/^(\d{7})/', 'collid' => 28),
         'mich:bryophytes' => array('pmterm' => '/(5\d{5})/', 'collid' => 7),
         'ny:lichens' => array('pmterm' => '/^(NY\d{8})/', 'collid' => 2),
