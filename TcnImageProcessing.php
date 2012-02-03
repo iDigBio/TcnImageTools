@@ -7,7 +7,6 @@ date_default_timezone_set('America/Phoenix');
 $specManager = new SpecProcessorManager($dbMetadata);
 
 //Set variables
-$specManager->setCollArr($collArr);
 $specManager->setDbMetadata($dbMetadata);
 $specManager->setSourcePathBase($sourcePathBase);
 $specManager->setTargetPathBase($targetPathBase);
@@ -33,7 +32,16 @@ $specManager->batchLoadImages();
 class SpecProcessorManager {
 
     private $conn;
-    private $collArr = array();
+    //pmterm = Pattern matching terms used to locate primary key (PK) of specimen record
+    //ex: '/(ASU\d{7})/'; '/(UTC\d{8})/'
+    private $collArr = array(
+        'duke:bryophytes' => array('pmterm' => '/^0*([1-9]{1}\d{0,6})\D*/', 'collid' => 6),
+        'duke:lichens' => array('pmterm' => '/^0*([1-9]{1}\d{0,6})\D*/', 'collid' => 28),
+        'mich:bryophytes' => array('pmterm' => '/(5\d{5})/', 'collid' => 7),
+        'ny:lichens' => array('pmterm' => '/^NY(\d{8})/', 'collid' => 2),
+        'ny:bryophytes' => array('pmterm' => '/^NY(\d{8})/', 'collid' => 3),
+        'wtu:bryophytes' => array('pmterm' => '/^WTU-B-0*([1-9]{1}\d{0,6})/', 'collid' => 8)
+    );
     private $collId = 0;
     private $title;
     private $collectionName;
@@ -68,7 +76,7 @@ class SpecProcessorManager {
     private $sourceGdImg;
     private $sourceImagickImg;
     private $exif;
-
+    
     function __construct(){
     }
 
@@ -891,7 +899,7 @@ class SpecProcessorManager {
 
     //Set and Get functions
     public function setCollArr($cArr){
-        $this->collArr = $cArr;
+        //$this->collArr = $cArr;
     }
 
     public function setTitle($t){
