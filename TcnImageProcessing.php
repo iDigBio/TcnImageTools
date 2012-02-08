@@ -77,6 +77,8 @@ class SpecProcessorManager {
     private $sourceImagickImg;
     private $exif;
     
+    private $dataLoaded = 0;
+    
     function __construct(){
     }
 
@@ -105,9 +107,17 @@ class SpecProcessorManager {
                 if($this->dbMetadata){
                     if($collName == 'bryophytes'){
                         $this->conn = MySQLiConnectionFactory::getCon("symbiotabryophytes");
+	                    if(!$this->conn){
+	                        $this->logOrEcho("Image upload aborted: Unable to establish connection to Bryophyte database\n");
+	                        exit;
+	                    }
                     }
                     else{
                         $this->conn = MySQLiConnectionFactory::getCon("symbiotalichens");
+	                    if(!$this->conn){
+	                        $this->logOrEcho("Image upload aborted: Unable to establish connection to Lichen database\n");
+	                        exit;
+	                    }
                     }
                 }
                 else{
@@ -199,12 +209,14 @@ class SpecProcessorManager {
             $sql = 'UPDATE images i INNER JOIN omoccurrences o ON i.occid = o.occid '.
                 'SET i.tid = o.tidinterpreted '.
                 'WHERE i.tid IS NULL and o.tidinterpreted IS NOT NULL';
-            $connBryo = MySQLiConnectionFactory::getCon("symbiotabryophytes");
-            $connBryo->query($sql);
-            $connBryo->close();
-            $connlichen = MySQLiConnectionFactory::getCon("symbiotalichens");
-            $connlichen->query($sql);
-            $connlichen->close();
+            if($this->dataLoaded){
+	            $connBryo = MySQLiConnectionFactory::getCon("symbiotabryophytes");
+	            $connBryo->query($sql);
+	            $connBryo->close();
+	            $connlichen = MySQLiConnectionFactory::getCon("symbiotalichens");
+	            $connlichen->query($sql);
+	            $connlichen->close();
+            }
         }
         //Close log file
         $this->logOrEcho('Image upload complete for '.$this->targetPathFrag."\n");
@@ -225,7 +237,7 @@ class SpecProcessorManager {
                             $fileExt = strtolower(substr($fileName,strrpos($fileName,'.')));
                             if($fileExt == ".jpg"){
                                 $this->processImageFile($fileName,$pathFrag);
-                                }
+                            }
                             elseif($fileExt == ".tif"){
                                 //Do something, like convert to jpg???
                                 //but for now do nothing
@@ -551,17 +563,17 @@ class SpecProcessorManager {
             //Check to see if image url already exists for that occid
             $imgId = 0;
             $sql = 'SELECT imgid '.
-                'FROM images WHERE (occid = '.$occId.') AND (url = "'.$this->imgUrlBase.$webUrl.'")';
+                'FROM images WHERE (occid = '.$occId.') AND (url = "'.$this->imgUrlBase.$this->targetPathFrag.$webUrl.'")';
             $rs = $this->conn->query($sql);
             if($r = $rs->fetch_object()){
                 $imgId = $r->imgid;
             }
             $rs->close();
             $sql1 = 'INSERT images(occid,url';
-            $sql2 = 'VALUES ('.$occId.',"'.$this->imgUrlBase.$webUrl.'"';
+            $sql2 = 'VALUES ('.$occId.',"'.$this->imgUrlBase.$this->targetPathFrag.$webUrl.'"';
             if($imgId){
                 $sql1 = 'REPLACE images(imgid,occid,url';
-                $sql2 = 'VALUES ('.$imgId.','.$occId.',"'.$this->imgUrlBase.$webUrl.'"';
+                $sql2 = 'VALUES ('.$imgId.','.$occId.',"'.$this->imgUrlBase.$this->targetPathFrag.$webUrl.'"';
             }
             if($tnUrl){
                 $sql1 .= ',thumbnailurl';
@@ -573,7 +585,10 @@ class SpecProcessorManager {
             }
             $sql1 .= ',imagetype,owner) ';
             $sql2 .= ',"specimen","'.$this->collectionName.'")';
-            if(!$this->conn->query($sql1.$sql2)){
+            if($this->conn->query($sql1.$sql2)){
+            	$this->dataLoaded = 1;
+            }
+            else{
                 $status = false;
                 $this->logOrEcho("\tERROR: Unable to load image record into database: ".$this->conn->error."; SQL: ".$sql1.$sql2."\n");
             }
@@ -795,7 +810,10 @@ class SpecProcessorManager {
                                 }
                                 if($updateFrag){
                                     $sqlUpdate = 'UPDATE omoccurrences SET '.substr($updateFrag,1).' WHERE occid = '.$occId;
-                                    if(!$this->conn->query($sqlUpdate)){
+                                    if($this->conn->query($sqlUpdate)){
+						            	$this->dataLoaded = 1;
+                                    }
+                                    else{
                                         $this->logOrEcho("ERROR: Unable to update existing record with new metadata \n");
                                         $this->logOrEcho("\tSQL : $sqlUpdate \n");
                                     }
@@ -847,7 +865,10 @@ class SpecProcessorManager {
                                     }
                                 }
                                 $sqlIns = $sqlIns1.') '.$sqlIns2.')';
-                                if(!$this->conn->query($sqlIns)){
+                                if($this->conn->query($sqlIns)){
+					            	$this->dataLoaded = 1;
+                                }
+                                else{
                                     if($this->logFH){
                                         $this->logOrEcho("ERROR: Unable to load new metadata record \n");
                                         $this->logOrEcho("\tSQL : $sqlIns \n");
