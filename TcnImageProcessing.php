@@ -38,9 +38,10 @@ class SpecProcessorManager {
         'duke:bryophytes' => array('pmterm' => '/^0*([1-9]{1}\d{0,6})\D*/', 'collid' => 6),
         'duke:lichens' => array('pmterm' => '/^0*([1-9]{1}\d{0,6})\D*/', 'collid' => 28),
         'mich:bryophytes' => array('pmterm' => '/(5\d{5})/', 'collid' => 7),
-        'ny:lichens' => array('pmterm' => '/^NY(\d{8})/', 'collid' => 2),
-        'ny:bryophytes' => array('pmterm' => '/^NY(\d{8})/', 'collid' => 3),
-        'wtu:bryophytes' => array('pmterm' => '/^WTU-B-0*([1-9]{1}\d{0,6})/', 'collid' => 8)
+        'ny:lichens' => array('pmterm' => '/^NY0*([1-9]{1}\d{0,7})/', 'collid' => 2),
+        'ny:bryophytes' => array('pmterm' => '/^NY0*([1-9]{1}\d{0,7})/', 'collid' => 3),
+        'vt:bryophytes' => array('pmterm' => '/^VT-UVMVT0*([1-9]{1}\d{0,5})/', 'collid' => 9),
+    	'wtu:bryophytes' => array('pmterm' => '/^WTU-B-0*([1-9]{1}\d{0,6})/', 'collid' => 8)
     );
     private $collId = 0;
     private $title;
@@ -577,11 +578,11 @@ class SpecProcessorManager {
             }
             if($tnUrl){
                 $sql1 .= ',thumbnailurl';
-                $sql2 .= ',"'.$this->imgUrlBase.$tnUrl.'"';
+                $sql2 .= ',"'.$this->imgUrlBase.$this->targetPathFrag.$tnUrl.'"';
             }
             if($oUrl){
                 $sql1 .= ',originalurl';
-                $sql2 .= ',"'.$this->imgUrlBase.$oUrl.'"';
+                $sql2 .= ',"'.$this->imgUrlBase.$this->targetPathFrag.$oUrl.'"';
             }
             $sql1 .= ',imagetype,owner) ';
             $sql2 .= ',"specimen","'.$this->collectionName.'")';
