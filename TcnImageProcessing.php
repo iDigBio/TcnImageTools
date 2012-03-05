@@ -679,7 +679,7 @@ class SpecProcessorManager {
                     $rsMap = $this->conn->query($sqlMap);
                     while($rMap = $rsMap->fetch_object()){
                         $field = strtolower($rMap->Field);
-                        if($field != "dbpk" && $field != "initialTimestamp" && $field != "occid" && $field != "collid" && $field != 'catalognumber'){
+                        if($field != "initialTimestamp" && $field != "occid" && $field != "collid" && $field != 'catalognumber'){
                             if(in_array($field,$headerArr)){
                                 $type = $rMap->Type;
                                 if(strpos($type,"double") !== false || strpos($type,"int") !== false || strpos($type,"decimal") !== false){
