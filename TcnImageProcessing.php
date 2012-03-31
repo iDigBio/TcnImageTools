@@ -491,8 +491,8 @@ class SpecProcessorManager {
     }
     
     public function setCollId($id){
-        $this->collId = $id;
-        if($this->collId && is_numeric($this->collId) && !$this->collectionName){
+        if($id && is_numeric($id)){
+    		$this->collId = $id;
             $sql = 'SELECT collid, collectionname, managementtype FROM omcollections WHERE (collid = '.$this->collId.')';
             if($rs = $this->conn->query($sql)){
                 if($row = $rs->fetch_object()){
