@@ -41,9 +41,10 @@ class SpecProcessorManager {
         'ny:lichens' => array('pmterm' => '/0*([1-9]{1}\d{0,7})/', 'collid' => 2),
         'ny:bryophytes' => array('pmterm' => '/0*([1-9]{1}\d{0,7})/', 'collid' => 3),
         'tenn:lichens' => array('pmterm' => '/^(TENN-L-\d{7})/', 'collid' => 31),
-    	'vt:bryophytes' => array('pmterm' => '/^VT-UVMVT0*([1-9]{1}\d{0,5})/', 'collid' => 9),
+    	'vt:bryophytes' => array('pmterm' => '/(UVMVT\d{6})/', 'collid' => 9),
         'wis:lichens' => array('pmterm' => '/^(WIS-L-\d{7})/', 'collid' => 22),
     	'wtu:bryophytes' => array('pmterm' => '/^WTU-B-0*([1-9]{1}\d{0,6})/', 'collid' => 8)
+    	//,'wtu:lichens' => array('pmterm' => '/^WTU-L-0*([1-9]{1}\d{0,6})/', 'collid' => 21)
     );
     private $collId = 0;
     private $title;
@@ -83,6 +84,7 @@ class SpecProcessorManager {
     private $dataLoaded = 0;
     
     function __construct(){
+  		ini_set('auto_detect_line_endings', true);
     }
 
     function __destruct(){
@@ -245,17 +247,6 @@ class SpecProcessorManager {
                                 //Do something, like convert to jpg???
                                 //but for now do nothing
                             }
-                            elseif($fileExt == ".orig"){
-                                //Move image out of FTP folder or delete
-		                    	if($this->keepOrig){
-		                    		if(file_exists($this->targetPathBase.$this->targetPathFrag.$this->origPathFrag)){
-		                    			rename($this->sourcePathBase.$pathFrag.$fileName,$this->targetPathBase.$this->targetPathFrag.$this->origPathFrag.$fileName.".orig");
-		                    		}
-		                        } else {
-		                            unlink($this->sourcePathBase.$pathFrag.$fileName);
-		                        }
-                            	rename($this->sourcePathBase.$pathFrag.$fileName,$this->targetPathBase.$this->targetPathFrag.'orig/'.$fileName);
-                            }
                             elseif(($fileExt == ".csv" || $fileExt == ".txt" || $fileExt == ".tab" || $fileExt == ".dat") && stripos($fileName,'metadata') !== false ){
                                 //Is metadata file. Append data to database records
                                 $this->processMetadataFile($this->sourcePathBase.$pathFrag.$fileName);
@@ -301,7 +292,7 @@ class SpecProcessorManager {
                     }
                 }
                 $targetFileName = $fileName;
-                //Check to see if image already exists at target, if so, delete or rename
+                //Check to see if image already exists at target, if so, delete or rename target
                 if(file_exists($targetPath.$targetFileName)){
                     if($this->copyOverImg){
                         unlink($targetPath.$targetFileName);
@@ -564,36 +555,44 @@ class SpecProcessorManager {
         if($occId && is_numeric($occId)){
             $this->logOrEcho("\tPreparing to load record into database\n");
             //Check to see if image url already exists for that occid
-            $imgId = 0;
-            $sql = 'SELECT imgid '.
+            $imgId = 0;$exTnUrl = '';$exLgUrl = '';
+            $sql = 'SELECT imgid, thumbnailurl, originalurl '.
                 'FROM images WHERE (occid = '.$occId.') AND (url = "'.$this->imgUrlBase.$this->targetPathFrag.$webUrl.'")';
             $rs = $this->conn->query($sql);
             if($r = $rs->fetch_object()){
                 $imgId = $r->imgid;
+                $exTnUrl = $r->thumbnailurl;
+                $exLgUrl = $r->originalurl;
             }
             $rs->close();
-            $sql1 = 'INSERT images(occid,url';
-            $sql2 = 'VALUES ('.$occId.',"'.$this->imgUrlBase.$this->targetPathFrag.$webUrl.'"';
-            if($imgId){
-                $sql1 = 'REPLACE images(imgid,occid,url';
-                $sql2 = 'VALUES ('.$imgId.','.$occId.',"'.$this->imgUrlBase.$this->targetPathFrag.$webUrl.'"';
+            $sql = '';
+            if($imgId && $exTnUrl <> $tnUrl && $exLgUrl <> $oUrl){
+                $sql = 'UPDATE images SET url = "'.$this->imgUrlBase.$this->targetPathFrag.$webUrl.'",'.
+                	'thumbnailurl = "'.$this->imgUrlBase.$this->targetPathFrag.$tnUrl.'",'.
+                	'originalurl = "'.$this->imgUrlBase.$this->targetPathFrag.$oUrl.'" '.
+                	'WHERE imgid = '.$imgId;
             }
-            if($tnUrl){
-                $sql1 .= ',thumbnailurl';
-                $sql2 .= ',"'.$this->imgUrlBase.$this->targetPathFrag.$tnUrl.'"';
+            else{
+	            $sql1 = 'INSERT images(occid,url';
+	            $sql2 = 'VALUES ('.$occId.',"'.$this->imgUrlBase.$this->targetPathFrag.$webUrl.'"';
+            	if($tnUrl){
+	                $sql1 .= ',thumbnailurl';
+	                $sql2 .= ',"'.$this->imgUrlBase.$this->targetPathFrag.$tnUrl.'"';
+	            }
+	            if($oUrl){
+	                $sql1 .= ',originalurl';
+	                $sql2 .= ',"'.$this->imgUrlBase.$this->targetPathFrag.$oUrl.'"';
+	            }
+	            $sql1 .= ',imagetype,owner) ';
+	            $sql2 .= ',"specimen","'.$this->collectionName.'")';
+	            $sql = $sql1.$sql2;
             }
-            if($oUrl){
-                $sql1 .= ',originalurl';
-                $sql2 .= ',"'.$this->imgUrlBase.$this->targetPathFrag.$oUrl.'"';
-            }
-            $sql1 .= ',imagetype,owner) ';
-            $sql2 .= ',"specimen","'.$this->collectionName.'")';
-            if($this->conn->query($sql1.$sql2)){
+            if($this->conn->query($sql)){
             	$this->dataLoaded = 1;
             }
             else{
                 $status = false;
-                $this->logOrEcho("\tERROR: Unable to load image record into database: ".$this->conn->error."; SQL: ".$sql1.$sql2."\n");
+                $this->logOrEcho("\tERROR: Unable to load image record into database: ".$this->conn->error."; SQL: ".$sql."\n");
             }
             if($imgId){
                 $this->logOrEcho("\tWARNING: Existing image record replaced; occid: $occId \n");
