@@ -41,7 +41,7 @@ class SpecProcessorManager {
         'ny:lichens' => array('pmterm' => '/0*([1-9]{1}\d{0,7})/', 'collid' => 2),
         'ny:bryophytes' => array('pmterm' => '/0*([1-9]{1}\d{0,7})/', 'collid' => 3),
         'tenn:lichens' => array('pmterm' => '/^(TENN-L-\d{7})/', 'collid' => 31),
-    	'vt:bryophytes' => array('pmterm' => '/(UVMVT\d{6})/', 'collid' => 9),
+    	'vt:bryophytes' => array('pmterm' => '/(UVMVT\d{5,6})\D*/', 'collid' => 9),
         'wis:lichens' => array('pmterm' => '/^(WIS-L-\d{7})/', 'collid' => 22),
     	'wtu:bryophytes' => array('pmterm' => '/^WTU-B-0*([1-9]{1}\d{0,6})/', 'collid' => 8)
     	//,'wtu:lichens' => array('pmterm' => '/^WTU-L-0*([1-9]{1}\d{0,6})/', 'collid' => 21)
