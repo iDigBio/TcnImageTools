@@ -35,14 +35,14 @@ class SpecProcessorManager {
     //pmterm = Pattern matching terms used to locate primary key (PK) of specimen record
     //ex: '/(ASU\d{7})/'; '/(UTC\d{8})/'
     private $collArr = array(
-        'duke:bryophytes' => array('pmterm' => '/^0*([1-9]{1}\d{0,6})\D*/', 'collid' => 6),
-        'duke:lichens' => array('pmterm' => '/^0*([1-9]{1}\d{0,6})\D*/', 'collid' => 28),
+        'duke:bryophytes' => array('pmterm' => '/^(\d{7})\D*/', 'collid' => 6),
+        'duke:lichens' => array('pmterm' => '/^(\d{7})\D*/', 'collid' => 28),
         //'mich:bryophytes' => array('pmterm' => '/^(\d{8})/', 'collid' => 7),
         'mich:lichens' => array('pmterm' => '/^(\d{8})/', 'collid' => 32),
     	'ny:lichens' => array('pmterm' => '/0*([1-9]{1}\d{0,7})/', 'collid' => 2),
         'ny:bryophytes' => array('pmterm' => '/0*([1-9]{1}\d{0,7})/', 'collid' => 3),
         'tenn:lichens' => array('pmterm' => '/^(TENN-L-\d{7})/', 'collid' => 31),
-    	'vt:bryophytes' => array('pmterm' => '/(UVMVT\d{5,6})\D*/', 'collid' => 9),
+    	'vt:bryophytes' => array('pmterm' => '/(UVMVT\d{5,6})\D*/i', 'collid' => 9),
         'wis:lichens' => array('pmterm' => '/^(WIS-L-\d{7})/', 'collid' => 22),
     	'wtu:bryophytes' => array('pmterm' => '/^WTU-B-0*([1-9]{1}\d{0,6})/', 'collid' => 8)
     	//,'wtu:lichens' => array('pmterm' => '/^WTU-L-0*([1-9]{1}\d{0,6})/', 'collid' => 21)
