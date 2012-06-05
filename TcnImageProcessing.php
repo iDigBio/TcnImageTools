@@ -38,7 +38,7 @@ class SpecProcessorManager {
         'duke:bryophytes' => array('pmterm' => '/^(\d{7})\D*/', 'collid' => 6),
         'duke:lichens' => array('pmterm' => '/^(\d{7})\D*/', 'collid' => 28),
         //'mich:bryophytes' => array('pmterm' => '/^(\d{8})/', 'collid' => 7),
-        'mich:lichens' => array('pmterm' => '/^(\d{8})/', 'collid' => 32),
+        //'mich:lichens' => array('pmterm' => '/^0*([1-9]{1}\d{0,7})/', 'collid' => 32),
     	'ny:lichens' => array('pmterm' => '/0*([1-9]{1}\d{0,7})/', 'collid' => 2),
         'ny:bryophytes' => array('pmterm' => '/0*([1-9]{1}\d{0,7})/', 'collid' => 3),
         'tenn:lichens' => array('pmterm' => '/^(TENN-L-\d{7})/', 'collid' => 31),
