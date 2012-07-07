@@ -1235,14 +1235,14 @@ class MySQLiConnectionFactory {
             'host' => $dbHost,
             'username' => $dbUser,
             'password' => $dbPass,
-            'database' => 'symbiotalichens'
+            'database' => 'symblichens'
         );
         MySQLiConnectionFactory::$SERVERS[] = array(
             'type' => 'write',
             'host' => $dbHost,
             'username' => $dbUser,
             'password' => $dbPass,
-            'database' => 'symbiotabryophytes'
+            'database' => 'symbbryophytes'
         );
         
         // Figure out which connections are open, automatically opening any connections
@@ -1253,7 +1253,8 @@ class MySQLiConnectionFactory {
                 $connection = new mysqli($server['host'], $server['username'], $server['password'], $server['database']);
                 if(mysqli_connect_errno()){
                     //throw new Exception('Could not connect to any databases! Please try again later.');
-                    exit('ABORTED: could not connect to database');
+                    //exit('ABORTED: could not connect to database');
+                    return false;
                 }
                 return $connection;
             }
