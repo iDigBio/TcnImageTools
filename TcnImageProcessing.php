@@ -112,14 +112,14 @@ class SpecProcessorManager {
                 //Connect to database or create output file
                 if($this->dbMetadata){
                     if($collName == 'bryophytes'){
-                        $this->conn = MySQLiConnectionFactory::getCon("symbiotabryophytes");
+                        $this->conn = MySQLiConnectionFactory::getCon("symbbryophytes");
 	                    if(!$this->conn){
 	                        $this->logOrEcho("Image upload aborted: Unable to establish connection to Bryophyte database\n");
 	                        exit;
 	                    }
                     }
                     else{
-                        $this->conn = MySQLiConnectionFactory::getCon("symbiotalichens");
+                        $this->conn = MySQLiConnectionFactory::getCon("symblichens");
 	                    if(!$this->conn){
 	                        $this->logOrEcho("Image upload aborted: Unable to establish connection to Lichen database\n");
 	                        exit;
@@ -216,10 +216,10 @@ class SpecProcessorManager {
                 'SET i.tid = o.tidinterpreted '.
                 'WHERE i.tid IS NULL and o.tidinterpreted IS NOT NULL';
             if($this->dataLoaded){
-	            $connBryo = MySQLiConnectionFactory::getCon("symbiotabryophytes");
+	            $connBryo = MySQLiConnectionFactory::getCon("symbbryophytes");
 	            $connBryo->query($sql);
 	            $connBryo->close();
-	            $connlichen = MySQLiConnectionFactory::getCon("symbiotalichens");
+	            $connlichen = MySQLiConnectionFactory::getCon("symblichens");
 	            $connlichen->query($sql);
 	            $connlichen->close();
             }
