@@ -248,9 +248,9 @@ class SpecProcessorManager {
                                 //Do something, like convert to jpg???
                                 //but for now do nothing
                             }
-                            elseif(($fileExt == ".csv" || $fileExt == ".txt" || $fileExt == ".tab" || $fileExt == ".dat") && stripos($fileName,'metadata') !== false ){
-                                //Is metadata file. Append data to database records
-                                $this->processMetadataFile($this->sourcePathBase.$pathFrag.$fileName);
+                            elseif(($fileExt == ".csv" || $fileExt == ".txt" || $fileExt == ".tab" || $fileExt == ".dat") && (stripos($fileName,'metadata') !== false || stripos($fileName,'skelet') !== false)){
+                                //Is skeletal file exists. Append data to database records
+                                $this->processSkeletalFile($this->sourcePathBase.$pathFrag.$fileName);
                             }
                                 else{
                                 $this->logOrEcho("\tERROR: File skipped, not a supported image file: ".$fileName." \n");
@@ -619,8 +619,8 @@ class SpecProcessorManager {
         return $status;
     }
     
-    private function processMetadataFile($filePath){
-        $this->logOrEcho("\tPreparing to load Metadata file into database\n");
+    private function processSkeletalFile($filePath){
+        $this->logOrEcho("\tPreparing to load Skeletal file into database\n");
         $fh = fopen($filePath,'r');
         $hArr = array();
         if($fh){
@@ -658,7 +658,7 @@ class SpecProcessorManager {
                 }
             }
             else{
-                $this->logOrEcho("\tERROR: Metadata file skipped: unable to determine file type \n");
+                $this->logOrEcho("\tERROR: Skeletal file skipped: unable to determine file type \n");
             }
             if($hArr){
                 //Clean and finalize header array
@@ -817,7 +817,7 @@ class SpecProcessorManager {
 						            	$this->dataLoaded = 1;
                                     }
                                     else{
-                                        $this->logOrEcho("ERROR: Unable to update existing record with new metadata \n");
+                                        $this->logOrEcho("ERROR: Unable to update existing record with new skeletal record \n");
                                         $this->logOrEcho("\tSQL : $sqlUpdate \n");
                                     }
                                 }
@@ -873,7 +873,7 @@ class SpecProcessorManager {
                                 }
                                 else{
                                     if($this->logFH){
-                                        $this->logOrEcho("ERROR: Unable to load new metadata record \n");
+                                        $this->logOrEcho("ERROR: Unable to load new skeletal record \n");
                                         $this->logOrEcho("\tSQL : $sqlIns \n");
                                     }
                                 }
@@ -887,14 +887,14 @@ class SpecProcessorManager {
                     $this->logOrEcho("\tERROR: Failed to locate catalognumber MD within file (".$filePath."),  \n");
                 }
             }
-            $this->logOrEcho("\tMetadata file loaded \n");
+            $this->logOrEcho("\tSkeletal file loaded \n");
             fclose($fh);
             if($this->keepOrig){
             	$fileName = substr($filePath,strrpos($filePath,'/')).'.orig_'.time();
-            	if(!file_exists($this->targetPathBase.$this->targetPathFrag.'orig_metadata')){
-            		mkdir($this->targetPathBase.$this->targetPathFrag.'orig_metadata');
+            	if(!file_exists($this->targetPathBase.$this->targetPathFrag.'orig_skeletal')){
+            		mkdir($this->targetPathBase.$this->targetPathFrag.'orig_skeletal');
             	}
-                if(!rename($filePath,$this->targetPathBase.$this->targetPathFrag.'orig_metadata'.$fileName)){
+                if(!rename($filePath,$this->targetPathBase.$this->targetPathFrag.'orig_skeletal'.$fileName)){
                     $this->logOrEcho("\tERROR: unable to move (".$filePath.") \n");
                 }
             } else {
@@ -904,7 +904,7 @@ class SpecProcessorManager {
             }
         }
         else{
-            $this->logOrEcho("ERROR: Can't open metadata file ".$filePath." \n");
+            $this->logOrEcho("ERROR: Can't open skeletal file ".$filePath." \n");
         }
     }
 
