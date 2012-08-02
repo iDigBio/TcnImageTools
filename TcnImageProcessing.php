@@ -35,7 +35,8 @@ class SpecProcessorManager {
     //pmterm = Pattern matching terms used to locate primary key (PK) of specimen record
     //ex: '/(ASU\d{7})/'; '/(UTC\d{8})/'
     private $collArr = array(
-        'duke:bryophytes' => array('pmterm' => '/^(\d{7})\D*/', 'collid' => 6),
+        'bry:lichens' => array('pmterm' => '/^(BRY-L-\d{7})\D*/', 'collid' => 13),
+    	'duke:bryophytes' => array('pmterm' => '/^(\d{7})\D*/', 'collid' => 6),
         'duke:lichens' => array('pmterm' => '/^(\d{7})\D*/', 'collid' => 28),
         //'mich:bryophytes' => array('pmterm' => '/^(\d{8})/', 'collid' => 7),
         'mich:lichens' => array('pmterm' => '/^0*([1-9]{1}\d{0,7})/', 'collid' => 32),
