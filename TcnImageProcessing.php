@@ -46,6 +46,7 @@ class SpecProcessorManager {
     	'vsc:bryophytes' => array('pmterm' => '/(VSC-L\d{5})\D*/', 'collid' => 13),
     	'vt:bryophytes' => array('pmterm' => '/(UVMVT\d{5,6})\D*/i', 'collid' => 9),
         'wis:lichens' => array('pmterm' => '/^(WIS-L-\d{7})/', 'collid' => 22),
+        'srp:lichens' => array('pmterm' => '/^(SRP-L-\d{7})/', 'collid' => 23),
     	'wtu:bryophytes' => array('pmterm' => '/^WTU-B-0*([1-9]{1}\d{0,6})/', 'collid' => 8)
     	//,'wtu:lichens' => array('pmterm' => '/^WTU-L-0*([1-9]{1}\d{0,6})/', 'collid' => 21)
     );
