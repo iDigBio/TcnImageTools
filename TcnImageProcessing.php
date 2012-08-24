@@ -1,5 +1,6 @@
 <?php
 require_once("TcnImageConfig.php");
+require_once("DbConnection.php");
 
 //-------------------------------------------------------------------------------------------//
 //End of variable assignment. Don't modify code below.
@@ -7,6 +8,7 @@ date_default_timezone_set('America/Phoenix');
 $specManager = new SpecProcessorManager($dbMetadata);
 
 //Set variables
+$specManager->setCollArr($collArr);
 $specManager->setDbMetadata($dbMetadata);
 $specManager->setSourcePathBase($sourcePathBase);
 $specManager->setTargetPathBase($targetPathBase);
@@ -50,6 +52,7 @@ class SpecProcessorManager {
     	'wtu:bryophytes' => array('pmterm' => '/^WTU-B-0*([1-9]{1}\d{0,6})/', 'collid' => 8)
     	//,'wtu:lichens' => array('pmterm' => '/^WTU-L-0*([1-9]{1}\d{0,6})/', 'collid' => 21)
     );
+    private $projProcessed = array();
     private $collId = 0;
     private $title;
     private $collectionName;
@@ -92,12 +95,14 @@ class SpecProcessorManager {
     }
 
     function __destruct(){
-    }
+        if($this->logFH){
+            fclose($this->logFH);
+        }
+	}
 
     public function batchLoadImages(){
         //Create log File
         if($this->logPath && file_exists($this->logPath)){
-
             $logFile = $this->logPath."log_".date('Ymd').".log";
             $this->logFH = fopen($logFile, 'a');
             $this->logOrEcho("\nDateTime: ".date('Y-m-d h:i:s A')."\n");
@@ -107,110 +112,100 @@ class SpecProcessorManager {
         $this->origPathFrag = 'orig/'.date("Ym").'/';
 
         foreach($this->collArr as $acroColl => $termArr){
+        	$this->targetPathFrag = '';
             $aArr = explode(':',$acroColl);
-            if(count($aArr) == 2){
-                $acro = $aArr[0];
-                $collName = $aArr[1];
-    
-                //Connect to database or create output file
-                if($this->dbMetadata){
-                    if($collName == 'bryophytes'){
-                        $this->conn = MySQLiConnectionFactory::getCon("symbbryophytes");
-	                    if(!$this->conn){
-	                        $this->logOrEcho("Image upload aborted: Unable to establish connection to Bryophyte database\n");
-	                        exit;
-	                    }
-                    }
-                    else{
-                        $this->conn = MySQLiConnectionFactory::getCon("symblichens");
-	                    if(!$this->conn){
-	                        $this->logOrEcho("Image upload aborted: Unable to establish connection to Lichen database\n");
-	                        exit;
-	                    }
-                    }
-                }
-                else{
-                    $mdFileName = $this->logPath.$acro.'-'.$collName."_urldata_".time().'.csv';
-                    $this->mdOutputFH = fopen($mdFileName, 'w');
-                    fwrite($this->mdOutputFH, '"collid","dbpk","url","thumbnailurl","originalurl"'."\n");
-                    if($this->mdOutputFH){
-                        $this->logOrEcho("Image Metadata written out to CSV file: '".$mdFileName."' (same folder as script)\n");
-                    }
-                    else{
-                        //If unable to create output file, abort upload procedure
-                        if($this->logFH){
-                            fclose($this->logFH);
-                        }
-                        $this->logOrEcho("Image upload aborted: Unable to establish connection to output file to where image metadata is to be written\n");
-                        exit;
-                    }
-                }
-                
-                //Set variables
-                if($this->dbMetadata){
-                    if(array_key_exists('collid',$termArr)){
-                        $this->setCollId($termArr['collid']);
-                    }
-                    else{
-                        exit("ABORTED: 'collid' variable has not been set");
-                    }
-                }
-                $this->patternMatchingTerm = $termArr['pmterm'];
-                
-                //Target path maintenance and verification
-                if(!file_exists($this->targetPathBase)){
-                    $this->logOrEcho("ABORT: targetPathBase does not exist \n");
-                    exit;
-                }
-                if(!file_exists($this->targetPathBase.$acro)){
-                    if(!mkdir($this->targetPathBase.$acro)){
-                        $this->logOrEcho("ERROR: unable to create new folder (".$this->targetPathBase.$acro.") \n");
-                    }
-                }
-                $this->targetPathFrag = $acro.'/'.$collName.'/';
-                if(!file_exists($this->targetPathBase.$this->targetPathFrag)){
-                    if(!mkdir($this->targetPathBase.$this->targetPathFrag)){
-                        $this->logOrEcho("ERROR: unable to create new folder (".$this->targetPathBase.$this->targetPathFrag.") \n");
-                    }
-                }
+			$collName = array_pop($aArr);
+			$this->projProcessed[$collName] = $collName; 
+			//Connect to database or create output file
+			if($this->dbMetadata){
+				$this->conn = MySQLiConnectionFactory::getCon($collName);
+			    if(!$this->conn){
+			        $this->logOrEcho("Image upload aborted: Unable to establish connection to ".$collName." database\n");
+			        exit("ABORT: Image upload aborted: Unable to establish connection to ".$collName." database");
+			    }
+			}
+			else{
+			    $mdFileName = $this->logPath.implode('_',$aArr).'-'.$collName.'_urldata_'.time().'.csv';
+			    $this->mdOutputFH = fopen($mdFileName, 'w');
+			    fwrite($this->mdOutputFH, '"collid","dbpk","url","thumbnailurl","originalurl"'."\n");
+			    if($this->mdOutputFH){
+			        $this->logOrEcho("Image Metadata written out to CSV file: '".$mdFileName."' (same folder as script)\n");
+			    }
+			    else{
+			        //If unable to create output file, abort upload procedure
+			        $this->logOrEcho("Image upload aborted: Unable to establish connection to output file to where image metadata is to be written\n");
+			        exit("ABORT: Image upload aborted: Unable to establish connection to output file to where image metadata is to be written");
+			    }
+			}
+			
+			//Set variables
+			if($this->dbMetadata){
+			    if(array_key_exists('collid',$termArr)){
+			        $this->setCollId($termArr['collid']);
+			    }
+			    else{
+			        exit("ABORT: 'collid' variable has not been set");
+			    }
+			}
+			$this->patternMatchingTerm = $termArr['pmterm'];
+			
+			//Target path maintenance and verification
+			if(!file_exists($this->targetPathBase)){
+			    $this->logOrEcho("ABORT: targetPathBase does not exist \n");
+			    exit("ABORT: targetPathBase does not exist");
+			}
+			//Build targetPathFrag and create the target folders if they already don't exist
+			foreach($aArr as $v){
+				if(!file_exists($this->targetPathBase.$v)){
+				    if(!mkdir($this->targetPathBase.$v)){
+				        $this->logOrEcho("ERROR: unable to create new folder (".$this->targetPathBase.$v.") \n");
+				        exit("ABORT: unable to create new folder (".$this->targetPathBase.$v.")");
+				    }
+				}
+				$this->targetPathFrag .= $v.'/';
+			}
+			//Add $collName toi path fragment 
+			$this->targetPathFrag .= $collName.'/';
+			if(!file_exists($this->targetPathBase.$this->targetPathFrag)){
+			    if(!mkdir($this->targetPathBase.$this->targetPathFrag)){
+			        $this->logOrEcho("ERROR: unable to create new folder (".$this->targetPathBase.$this->targetPathFrag.") \n");
+			        exit("ABORT: unable to create new folder (".$this->targetPathBase.$this->targetPathFrag.")");
+			    }
+			}
 
-                //Source path maintenance and verification
-                if(!file_exists($this->sourcePathBase)){
-                    $this->logOrEcho("ABORT: sourcePathBase does not exist \n");
-                    exit;
-                }
-                
-                //If originals are to be kept, make sure target folders exist  
-                if($this->keepOrig){
-	                if(!file_exists($this->targetPathBase.$this->targetPathFrag.'orig/')){
-	                    mkdir($this->targetPathBase.$this->targetPathFrag.'orig/');
-	                }
-	                if(file_exists($this->targetPathBase.$this->targetPathFrag.'orig/')){
-	                    if(!file_exists($this->targetPathBase.$this->targetPathFrag.$this->origPathFrag)){
-	                    	mkdir($this->targetPathBase.$this->targetPathFrag.$this->origPathFrag);
-	                    }
-	                }
-                }                
-                
-                //Lets start processing folder
-                $this->logOrEcho('Starting image processing: '.$this->targetPathFrag."\n");
-                if(file_exists($this->targetPathBase.$this->targetPathFrag)){
-                    $this->processFolder($this->targetPathFrag);
-                }
-                $this->logOrEcho('Image upload complete for '.$this->targetPathFrag."\n");
-                $this->logOrEcho("-----------------------------------------------------\n\n");
-                
-                //Close connection or MD output file
-                if($this->dbMetadata){
-                     if(!($this->conn === false)) $this->conn->close();
-                }
-                else{
-                    fclose($this->mdOutputFH);
-                }
-            }
-            else{
-                $this->logOrEcho("ERROR: processing ".$acroColl." aborted since unable to determine collection type \n");
-            }
+			//Source path maintenance and verification
+			if(!file_exists($this->sourcePathBase)){
+			    $this->logOrEcho("ABORT: sourcePathBase does not exist \n");
+			    exit("ABORT: sourcePathBase does not exist");
+			}
+			
+			//If originals are to be kept, make sure target folders exist  
+			if($this->keepOrig){
+				if(!file_exists($this->targetPathBase.$this->targetPathFrag.'orig/')){
+				    mkdir($this->targetPathBase.$this->targetPathFrag.'orig/');
+				}
+				if(file_exists($this->targetPathBase.$this->targetPathFrag.'orig/')){
+				    if(!file_exists($this->targetPathBase.$this->targetPathFrag.$this->origPathFrag)){
+				    	mkdir($this->targetPathBase.$this->targetPathFrag.$this->origPathFrag);
+				    }
+				}
+			}
+			
+			//Lets start processing folder
+			$this->logOrEcho('Starting image processing: '.$this->targetPathFrag."\n");
+			if(file_exists($this->targetPathBase.$this->targetPathFrag)){
+			    $this->processFolder($this->targetPathFrag);
+			}
+			$this->logOrEcho('Image upload complete for '.$this->targetPathFrag."\n");
+			$this->logOrEcho("-----------------------------------------------------\n\n");
+			
+			//Close connection or MD output file
+			if($this->dbMetadata){
+			     if(!($this->conn === false)) $this->conn->close();
+			}
+			else{
+			    fclose($this->mdOutputFH);
+			}
         }
         //Now lets start closing things up
         //First some data maintenance
@@ -219,25 +214,26 @@ class SpecProcessorManager {
                 'SET i.tid = o.tidinterpreted '.
                 'WHERE i.tid IS NULL and o.tidinterpreted IS NOT NULL';
             if($this->dataLoaded){
-	            $connBryo = MySQLiConnectionFactory::getCon("symbbryophytes");
-	            $connBryo->query($sql);
-	            $connBryo->close();
-	            $connlichen = MySQLiConnectionFactory::getCon("symblichens");
-	            $connlichen->query($sql);
-	            $connlichen->close();
+            	foreach($this->projProcessed as $p){
+		            if($con = MySQLiConnectionFactory::getCon($p)){
+			            $con->query($sql);
+			            $con->close();
+		            }
+            	}
             }
         }
         //Close log file
         $this->logOrEcho('Image upload complete for '.$this->targetPathFrag."\n");
         $this->logOrEcho("----------------------------\n\n");
-        if($this->logFH){
-            fclose($this->logFH);
-        }
     }
 
     private function processFolder($pathFrag = ''){
         set_time_limit(2000);
         //Read file and loop through images
+        if(!file_exists($this->sourcePathBase.$pathFrag)){
+			$this->logOrEcho("\tSource path does not exist: ".$this->sourcePathBase.$pathFrag." \n");
+			exit("ABORT: Source path does not exist: ".$this->sourcePathBase.$pathFrag);
+        }
         if($imgFH = opendir($this->sourcePathBase.$pathFrag)){
             while($fileName = readdir($imgFH)){
                 if($fileName != "." && $fileName != ".." && $fileName != ".svn"){
@@ -269,7 +265,7 @@ class SpecProcessorManager {
         else{
             $this->logOrEcho("\tERROR: unable to access source directory: ".$this->sourcePathBase.$pathFrag." \n");
         }
-           closedir($imgFH);
+		if($imgFH) closedir($imgFH);
     }
 
     private function processImageFile($fileName,$pathFrag = ''){
@@ -424,7 +420,7 @@ class SpecProcessorManager {
         else{
             // Neither ImageMagick nor GD are installed
             $this->logOrEcho("\tFATAL ERROR: No appropriate image handler for image conversions\n");
-            exit;
+            exit("ABORT: No appropriate image handler for image conversions");
         }
         return $status;
     }
@@ -496,12 +492,13 @@ class SpecProcessorManager {
                     $this->managementType = $row->managementtype;
                 }
                 else{
-                    exit('ABORTED: unable to locate collection in data');
+                    exit('ABORT: unable to locate collection in data');
                 }
                 $rs->close();
             }
             else{
-                exit('ABORTED: unable run SQL to obtain collectionName');
+            	echo 'SQL: '.$sql;
+                exit('ABORT: unable run SQL to obtain collectionName');
             }
         }
     }
@@ -926,7 +923,13 @@ class SpecProcessorManager {
 
     //Set and Get functions
     public function setCollArr($cArr){
-        //$this->collArr = $cArr;
+    	if($cArr){
+			$this->collArr = $cArr;
+    	}
+    	else{
+            $this->logOrEcho("Error: collection array does not exist\n");
+    		exit("ABORT: collection array does not exist");
+    	}
     }
 
     public function setTitle($t){
@@ -1207,60 +1210,32 @@ class SpecProcessorManager {
     }
     
     private function encodeString($inStr){
-        $retStr = trim(str_replace('"',"",$inStr));
-        if(mb_detect_encoding($inStr,'UTF-8,ISO-8859-1') == "UTF-8"){
-            //$value = utf8_decode($value);
-            $retStr = iconv("UTF-8","ISO-8859-1//TRANSLIT",$inStr);
-        }
-        return $retStr;
-    }
+ 		global $charset;
+ 		$retStr = trim($inStr);
+ 		if($inStr){
+			if(strtolower($charset) == "utf-8" || strtolower($charset) == "utf8"){
+				if(mb_detect_encoding($inStr,'UTF-8,ISO-8859-1') == "ISO-8859-1"){
+					$retStr = utf8_encode($inStr);
+					//$retStr = iconv("ISO-8859-1//TRANSLIT","UTF-8",$inStr);
+				}
+			}
+			elseif(strtolower($charset) == "iso-8859-1"){
+				if(mb_detect_encoding($inStr,'ISO-8859-1,UTF-8') == "UTF-8"){
+					$retStr = utf8_decode($inStr);
+					//$retStr = iconv("UTF-8","ISO-8859-1//TRANSLIT",$inStr);
+				}
+			}
+ 		}
+		return $retStr;
+	}
 
     public function logOrEcho($str){
-        if($this->silent){
+        if(!$this->silent){
             if($this->logFH){
                 fwrite($this->logFH,$str);
             } else {
                 echo $str;
             }    
-        }
-    }
-}
-
-class MySQLiConnectionFactory {
-
-    static $SERVERS = array();
-
-    public static function getCon($db) {
-        global $dbHost, $dbUser, $dbPass;
-        //Set variable
-        MySQLiConnectionFactory::$SERVERS[] = array(
-            'type' => 'write',
-            'host' => $dbHost,
-            'username' => $dbUser,
-            'password' => $dbPass,
-            'database' => 'symblichens'
-        );
-        MySQLiConnectionFactory::$SERVERS[] = array(
-            'type' => 'write',
-            'host' => $dbHost,
-            'username' => $dbUser,
-            'password' => $dbPass,
-            'database' => 'symbbryophytes'
-        );
-        
-        // Figure out which connections are open, automatically opening any connections
-        // which are failed or not yet opened but can be (re)established.
-        for($i = 0, $n = count(MySQLiConnectionFactory::$SERVERS); $i < $n; $i++) {
-            $server = MySQLiConnectionFactory::$SERVERS[$i];
-            if($server['database'] == $db){
-                $connection = new mysqli($server['host'], $server['username'], $server['password'], $server['database']);
-                if(mysqli_connect_errno()){
-                    //throw new Exception('Could not connect to any databases! Please try again later.');
-                    //exit('ABORTED: could not connect to database');
-                    return false;
-                }
-                return $connection;
-            }
         }
     }
 }
