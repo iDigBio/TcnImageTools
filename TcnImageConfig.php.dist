@@ -1,14 +1,5 @@
-<?php 
-//Base folder containing herbarium folder ; read access needed
-$sourcePathBase = '';
-//Folder where images are to be placed; write access needed
-$targetPathBase = '';
-//Url base needed to build image URL that will be save in DB
-$imgUrlBase = '';
-//Path to where log files will be placed
-$logPath = '';
-//If silent is set, script will produce no non-fatal output.
-$silent = 1;
+//If silent is set, script will produce not produce a log file
+$silent = 0;
 
 //If record matching PK is not found, should a new blank record be created?
 $createNewRec = 1;
@@ -34,6 +25,6 @@ $keepOrig = 1;
 //0 = write image metadata to file; 1 = write metadata to Symbiota database
 $dbMetadata = 1;
 
-$dbHost="";
-$dbUser="";
-$dbPass="";
+$collArr = array(
+	'bry:lichens' => array('pmterm' => '/^(BRY-L-\d{7})\D*/', 'collid' => 13)
+);
