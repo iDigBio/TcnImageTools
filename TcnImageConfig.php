@@ -1,4 +1,14 @@
 <?php 
+//Variables needing security
+//Base folder containing herbarium folder ; read access needed
+$sourcePathBase = '';
+//Folder where images are to be placed; write access needed
+$targetPathBase = '';
+//Url base needed to build image URL that will be save in DB
+$imgUrlBase = 'http://storage.idigbio.org/';
+//Path to where log files will be placed
+$logPath = $sourcePathBase;
+
 //If silent is set, script will produce not produce a log file.
 $silent = 0;
 //If record matching PK is not found, should a new blank record be created?
@@ -29,6 +39,7 @@ $collArr = array(
 	'bry:lichens' => array('pmterm' => '/^(BRY-L-\d{7})\D*/', 'collid' => 13),
 	'duke:bryophytes' => array('pmterm' => '/^(\d{7})\D*/', 'collid' => 6),
 	'duke:lichens' => array('pmterm' => '/^(\d{7})\D*/', 'collid' => 28),
+	'f:bryophytes' => array('pmterm' => '/^(C\d{7}F)\D*/', 'collid' => 1),
 	//'mich:bryophytes' => array('pmterm' => '/^(\d{8})/', 'collid' => 7),
 	'mich:lichens' => array('pmterm' => '/^0*([1-9]{1}\d{0,7})/', 'collid' => 32),
 	'ny:lichens' => array('pmterm' => '/0*([1-9]{1}\d{0,7})/', 'collid' => 2),
