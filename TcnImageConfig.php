@@ -31,6 +31,7 @@ $collArr = array(
 	'duke:lichens' => array('pmterm' => '/^(\d{7})\D*/', 'collid' => 28),
 	//'mich:bryophytes' => array('pmterm' => '/^(\d{8})/', 'collid' => 7),
 	'mich:lichens' => array('pmterm' => '/^0*([1-9]{1}\d{0,7})/', 'collid' => 32),
+	'msc:bryophytes' => array('pmterm' => '/^(MSC-B-\d{7})/', 'collid' => 10),
 	'ny:lichens' => array('pmterm' => '/0*([1-9]{1}\d{0,7})/', 'collid' => 2),
 	'ny:bryophytes' => array('pmterm' => '/0*([1-9]{1}\d{0,7})/', 'collid' => 3),
 	'srp:lichens' => array('pmterm' => '/^(SRP-L-\d{7})/', 'collid' => 23),
