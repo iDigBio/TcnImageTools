@@ -40,19 +40,19 @@ $collArr = array(
 	'duke:bryophytes' => array('pmterm' => '/^(\d{7})\D*/', 'collid' => 6),
 	'duke:lichens' => array('pmterm' => '/^(\d{7})\D*/', 'collid' => 28),
 	'f:bryophytes' => array('pmterm' => '/^(C\d{7}F)\D*/', 'collid' => 1),
-	'mich:bryophytes' => array('pmterm' => '/^(\d{1,7})/', 'collid' => 7),
-	'mich:lichens' => array('pmterm' => '/^(\d{1,7})/', 'collid' => 32),
-	'mich:mycology' => array('pmterm' => '/^MICH-F-(\d{1,7})/', 'collid' => 10),
-	'msc:bryophytes' => array('pmterm' => '/^(MSC-B-\d{7})/', 'collid' => 16),
-	'ny:lichens' => array('pmterm' => '/0*([1-9]{1}\d{0,7})/', 'collid' => 2),
-	'ny:bryophytes' => array('pmterm' => '/0*([1-9]{1}\d{0,7})/', 'collid' => 3),
-	'srp:lichens' => array('pmterm' => '/^(SRP-L-\d{7})/', 'collid' => 23),
-	'tenn:bryophytes' => array('pmterm' => '/^(TENN-B-\d{7})/', 'collid' => 15),
-	'tenn:lichens' => array('pmterm' => '/^(TENN-L-\d{7})/', 'collid' => 31),
-	'tenn:mycology' => array('pmterm' => '/^TENN\s*(\d{6})\D*/', 'collid' => 7),
+	'mich:bryophytes' => array('pmterm' => '/^(\d{1,7})\D*/', 'collid' => 7),
+	'mich:lichens' => array('pmterm' => '/^(\d{1,7})\D*/', 'collid' => 32),
+	'mich:mycology' => array('pmterm' => '/^MICH-F-(\d{1,7})\D*/', 'collid' => 10),
+	'msc:bryophytes' => array('pmterm' => '/^(MSC-B-\d{7})\D*/', 'collid' => 16),
+	'ny:lichens' => array('pmterm' => '/0*([1-9]{1}\d{0,7})\D*/', 'collid' => 2),
+	'ny:bryophytes' => array('pmterm' => '/0*([1-9]{1}\d{0,7})\D*/', 'collid' => 3),
+	'srp:lichens' => array('pmterm' => '/^(SRP-L-\d{7})\D*/', 'collid' => 23),
+	'tenn:bryophytes' => array('pmterm' => '/^(TENN-B-\d{7})\D*/', 'collid' => 15),
+	'tenn:lichens' => array('pmterm' => '/^(TENN-L-\d{7})\D*/', 'collid' => 31),
+	'tenn:mycology' => array('pmterm' => '/^TENN\s*(\d{6}[A-Z]{0,1})\D*/', 'collid' => 7),
 	'vsc:bryophytes' => array('pmterm' => '/(VSC-L\d{5})\D*/', 'collid' => 13),
 	'vt:bryophytes' => array('pmterm' => '/(UVMVT\d{5,6})\D*/i', 'collid' => 9),
-	'wis:lichens' => array('pmterm' => '/^(WIS-L-\d{7})/', 'collid' => 22),
-	'wtu:bryophytes' => array('pmterm' => '/^WTU-B-0*([1-9]{1}\d{0,6})/', 'collid' => 8)
-	//,'wtu:lichens' => array('pmterm' => '/^WTU-L-0*([1-9]{1}\d{0,6})/', 'collid' => 21)
+	'wis:lichens' => array('pmterm' => '/^(WIS-L-\d{7})\D*/', 'collid' => 22),
+	'wtu:bryophytes' => array('pmterm' => '/^WTU-B-0*([1-9]{1}\d{0,6})\D*/', 'collid' => 8)
+	//,'wtu:lichens' => array('pmterm' => '/^WTU-L-0*([1-9]{1}\d{0,6})\D*/', 'collid' => 21)
 );
