@@ -58,7 +58,7 @@ $collArr = array(
 	'vsc:bryophytes' => array('pmterm' => '/(VSC-L\d{5})\D*/', 'collid' => 13),
 	'vt:bryophytes' => array('pmterm' => '/(UVMVT\d{5,6})\D*/i', 'collid' => 9),
 	'wis:lichens' => array('pmterm' => '/^(WIS-L-\d{7})\D*/', 'collid' => 22),
-	'wtu:bryophytes' => array('pmterm' => '/^WTU-B-0*([1-9]{1}\d{0,6})\D*/', 'collid' => 8),
+	'wtu:bryophytes' => array('pmterm' => '/^WTU-B-0*([1-9]{1}\d{0,6})\D*/', 'collid' => 8)
 	//'wtu:lichens' => array('pmterm' => '/^WTU-L-0*([1-9]{1}\d{0,6})\D*/', 'collid' => 21),
-	'wtu:mycology' => array('pmterm' => '/^(WTU-F-\d{6})\D*/', 'collid' => 9)
+	//'wtu:mycology' => array('pmterm' => '/^(WTU-F-\d{6})\D*/', 'collid' => 9)
 );
