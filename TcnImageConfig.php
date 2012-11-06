@@ -36,6 +36,7 @@ $keepOrig = 1;
 $dbMetadata = 1;
 
 $collArr = array(
+	'asu:lichens' => array('pmterm' => '/^(ASU\d{7})\D*/', 'collid' => 7),
 	'bry:lichens' => array('pmterm' => '/^(BRY-L-\d{7})\D*/', 'collid' => 13),
 	'duke:bryophytes' => array('pmterm' => '/^(\d{7})\D*/', 'collid' => 6),
 	'duke:lichens' => array('pmterm' => '/^(\d{7})\D*/', 'collid' => 28),
