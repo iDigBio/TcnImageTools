@@ -1,5 +1,5 @@
 <?php
-require_once("TcnImageConfig.php");
+require_once("TcnImageConfig_local.php");
 require_once("DbConnection.php");
 
 //-------------------------------------------------------------------------------------------//
@@ -208,7 +208,7 @@ class SpecProcessorManager {
 			}
 		}
 		//Close log file
-		$this->logOrEcho('Image upload complete for '.$this->targetPathFrag."\n");
+		$this->logOrEcho("Image upload process finished! (".date('Y-m-d h:i:s A').") \n");
 		$this->logOrEcho("----------------------------\n\n");
 	}
 
@@ -384,7 +384,7 @@ class SpecProcessorManager {
 			}
 		}
 		else{
-			$this->logOrEcho("File skipped (".$fileName."), unable to extract specimen identifier\n");
+			$this->logOrEcho("File skipped (".$pathFrag.$fileName."), unable to extract specimen identifier\n");
 		}
 		//ob_flush();
 		flush();
@@ -479,7 +479,7 @@ class SpecProcessorManager {
 				else{
 					exit('ABORT: unable to locate collection in data');
 				}
-				$rs->close();
+				$rs->free();
 			}
 			else{
 				echo 'SQL: '.$sql;
@@ -509,7 +509,7 @@ class SpecProcessorManager {
 		if($row = $rs->fetch_object()){
 			$occId = $row->occid;
 		}
-		$rs->close();
+		$rs->free();
 		if(!$occId && $this->createNewRec){
 			//Records does not exist, create a new one to which image will be linked
 			$sql2 = 'INSERT INTO omoccurrences(collid,catalognumber,processingstatus) '.
@@ -550,7 +550,7 @@ class SpecProcessorManager {
 				$exTnUrl = $r->thumbnailurl;
 				$exLgUrl = $r->originalurl;
 			}
-			$rs->close();
+			$rs->free();
 			$sql = '';
 			if($imgId && $exTnUrl <> $tnUrl && $exLgUrl <> $oUrl){
 				$sql = 'UPDATE images SET url = "'.$this->imgUrlBase.$this->targetPathFrag.$webUrl.'",'.
@@ -684,10 +684,18 @@ class SpecProcessorManager {
 							}
 						}
 					}
-					
+
+					//Add exsiccati titles and numbers to $symbMap
+					$symbMap['ometid']['type'] = "numeric";
+					$symbMap['exsiccatititle']['type'] = "string";
+					$symbMap['exsiccatititle']['size'] = 150;
+					$symbMap['exsiccatinumber']['type'] = "string";
+					$symbMap['exsiccatinumber']['size'] = 45;
+					$exsiccatiTitleMap = array();
+
 					//Fetch each record within file and process accordingly
 					while($recordArr = $this->getRecordArr($fh,$delimiter)){
-						//Clean record and map fields
+						//Clean record and creaet map array
 						$catNum = 0;
 						$recMap = Array();
 						foreach($headerArr as $k => $hStr){
@@ -702,7 +710,7 @@ class SpecProcessorManager {
 								if($valueStr) $recMap[$hStr] = $valueStr;
 							}
 						}
-						
+
 						//If sciname does not exist but genus or scientificname does, create sciname
 						if((!array_key_exists('sciname',$recMap) || !$recMap['sciname'])){
 							if(array_key_exists('genus',$recMap) && $recMap['genus']){
@@ -720,9 +728,49 @@ class SpecProcessorManager {
 								$symbMap['sciname']['size'] = 255;
 							}
 						}
+						
+						//If exsiccatiTitle and exsiccatiNumber exists but ometid (title number) does not
+						if(array_key_exists('exsiccatinumber',$recMap) && $recMap['exsiccatinumber']){
+							if(array_key_exists('exsiccatititle',$recMap) && $recMap['exsiccatititle'] && (!array_key_exists('ometid',$recMap) || !$recMap['ometid'])){
+								//Get ometid
+								if(array_key_exists($recMap['exsiccatititle'],$exsiccatiTitleMap)){
+									//ometid was already harvested for that title 
+									$recMap['ometid'] = $exsiccatiTitleMap[$recMap['exsiccatititle']];
+								}
+								else{
+									$titleStr = trim($this->conn->real_escape_string($recMap['exsiccatititle']));
+									$sql = 'SELECT ometid FROM omexsiccatititles '.
+										'WHERE (title = "'.$titleStr.'") OR (abbreviation = "'.$titleStr.'")';
+									$rs = $this->conn->query($sql);
+									if($r = $rs->fetch_object()){
+										$recMap['ometid'] = $r->ometid;
+										$exsiccatiTitleMap[$recMap['exsiccatititle']] = $r->ometid;
+									}
+									$rs->free();
+								}
+							}
+							//Get exsiccati number id (omenid)
+							if(array_key_exists('ometid',$recMap) && $recMap['ometid']){
+								$numStr = trim($this->conn->real_escape_string($recMap['exsiccatinumber']));
+								$sql = 'SELECT omenid FROM omexsiccatinumbers '.
+									'WHERE ometid = ('.$recMap['ometid'].') AND (exsnumber = "'.$numStr.'")';
+								$rs = $this->conn->query($sql);
+								if($r = $rs->fetch_object()){
+									$recMap['omenid'] = $r->omenid;
+								}
+								$rs->free();
+								if(!array_key_exists('omenid',$recMap)){
+									//Exsiccati number needs to be added
+									$sql = 'INSERT INTO omexsiccatinumbers(ometid,exsnumber) '.
+										'VALUES('.$recMap['ometid'].',"'.$numStr.'")';
+									if($this->conn->query($sql)) $recMap['omenid'] = $this->conn->insert_id;
+								}
+							}
+						}
 
 						//Load record
 						if($catNum){
+							$occid = 0;
 							//Check to see if regular expression term is needed to extract correct part of catalogNumber
 							if(preg_match($this->patternMatchingTerm,$catNum,$matchArr)){
 								if(array_key_exists(1,$matchArr) && $matchArr[1]){
@@ -733,56 +781,63 @@ class SpecProcessorManager {
 								}
 							}
 							//Check to see if matching record already exists in database
-							$sql = 'SELECT occid,'.(!array_key_exists('occurrenceremarks',$symbMap)?'occurrenceremarks,':'').implode(',',array_keys($symbMap)).' '.
+							$activeFields = array_keys($recMap);
+							unset($activeFields[array_search('ometid',$activeFields)]);
+							unset($activeFields[array_search('omenid',$activeFields)]);
+							unset($activeFields[array_search('exsiccatititle',$activeFields)]);
+							unset($activeFields[array_search('exsiccatinumber',$activeFields)]);
+							$sql = 'SELECT occid,'.(!array_key_exists('occurrenceremarks',$recMap)?'occurrenceremarks,':'').implode(',',$activeFields).' '.
 								'FROM omoccurrences WHERE collid = '.$this->collId.' AND (catalognumber = '.(is_numeric($catNum)?$catNum:'"'.$catNum.'"').') ';
+							//echo $sql;
 							$rs = $this->conn->query($sql);
 							if($r = $rs->fetch_assoc()){
 								//Record already exists, thus just append values to record
-								$occId = $r['occid'];
+								$occid = $r['occid'];
 								$updateValueArr = array();
 								$occRemarkArr = array();
-								foreach($recMap as $k => $v){
-									if(!trim($r[$k])){
+								foreach($activeFields as $activeField){
+									$activeValue = $recMap[$activeField];
+									if(!trim($r[$activeField])){
 										//Field is empty for existing record, thus load new data 
-										$type = (array_key_exists('type',$symbMap[$k])?$symbMap[$k]['type']:'string');
-										$size = (array_key_exists('size',$symbMap[$k])?$symbMap[$k]['size']:0);
+										$type = (array_key_exists('type',$symbMap[$activeField])?$symbMap[$activeField]['type']:'string');
+										$size = (array_key_exists('size',$symbMap[$activeField])?$symbMap[$activeField]['size']:0);
 										if($type == 'numeric'){
-											if(is_numeric($v)){
-												$updateValueArr[$k] = $v;
+											if(is_numeric($activeValue)){
+												$updateValueArr[$activeField] = $activeValue;
 											}
 											else{
 												//Not numeric, thus load into occRemarks 
-												$occRemarkArr[$k] = $v;
+												$occRemarkArr[$activeField] = $activeValue;
 											}
 										}
 										elseif($type == 'date'){
-											if(preg_match('/^\d{4}-\d{2}-\d{2}$/', $v)){
-												$updateValueArr[$k] = $v;
+											if(preg_match('/^\d{4}-\d{2}-\d{2}$/', $activeValue)){
+												$updateValueArr[$activeField] = $activeValue;
 											} 
-											elseif(($dateStr = strtotime($v))){
-												$updateValueArr[$k] = date('Y-m-d H:i:s', $dateStr);
-											} 
+											elseif(($dateStr = strtotime($activeValue))){
+												$updateValueArr[$activeField] = date('Y-m-d H:i:s', $dateStr);
+											}
 											else{
 												//Not valid date, thus load into verbatiumEventDate or occRemarks
-												if($k == 'eventdate' && !array_key_exists('verbatimeventdate',$updateValueArr)){
-													$updateValueArr['verbatimeventdate'] = $v;
+												if($activeField == 'eventdate' && !array_key_exists('verbatimeventdate',$updateValueArr)){
+													$updateValueArr['verbatimeventdate'] = $activeValue;
 												}
 												else{
-													$occRemarkArr[$k] = $v;
+													$occRemarkArr[$activeField] = $activeValue;
 												}
 											}
 										}
 										else{
 											//Type assumed to be a string
-											if($size && strlen($v) > $size){
-												$v = substr($v,0,$size);
+											if($size && strlen($activeValue) > $size){
+												$activeValue = substr($activeValue,0,$size);
 											}
-											$updateValueArr[$k] = $v;
+											$updateValueArr[$activeField] = $activeValue;
 										}
 									}
-									elseif($v != $r[$k]){
+									elseif($activeValue != $r[$activeField]){
 										//Target field is not empty and values not equal, thus add value into occurrenceRemarks
-										$occRemarkArr[$k] = $v;
+										$occRemarkArr[$activeField] = $activeValue;
 									}
 								}
 								$updateFrag = '';
@@ -797,7 +852,7 @@ class SpecProcessorManager {
 									$updateFrag .= ',occurrenceremarks="'.($r['occurrenceremarks']?$r['occurrenceremarks'].'; ':'').substr($occStr,1).'"';
 								}
 								if($updateFrag){
-									$sqlUpdate = 'UPDATE omoccurrences SET '.substr($updateFrag,1).' WHERE occid = '.$occId;
+									$sqlUpdate = 'UPDATE omoccurrences SET '.substr($updateFrag,1).' WHERE occid = '.$occid;
 									if($this->conn->query($sqlUpdate)){
 										$this->dataLoaded = 1;
 									}
@@ -811,50 +866,50 @@ class SpecProcessorManager {
 								//Insert new record
 								$sqlIns1 = 'INSERT INTO omoccurrences(collid,catalogNumber,processingstatus';
 								$sqlIns2 = 'VALUES ('.$this->collId.',"'.$catNum.'","unprocessed"';
-								foreach($symbMap as $symbKey => $fMap){
-									if(array_key_exists($symbKey,$recMap)){
-										$sqlIns1 .= ','.$symbKey;
-										$value = $recMap[$symbKey];
-										$type = (array_key_exists('type',$fMap)?$fMap['type']:'string');
-										$size = (array_key_exists('size',$fMap)?$fMap['size']:0);
-										if($type == 'numeric'){
-											if(is_numeric($value)){
-												$sqlIns2 .= ",".$value;
-											}
-											else{
-												$sqlIns2 .= ",NULL";
-											}
-										}
-										elseif($type == 'date'){
-											$dateStr = $this->formatDate($value); 
-											if($dateStr){
-												$sqlIns2 .= ',"'.$dateStr.'"';
-											}
-											else{
-												$sqlIns2 .= ",NULL";
-												//Not valid date, thus load into verbatiumEventDate if it's the eventDate field 
-												if($symbKey == 'eventdate' && !array_key_exists('verbatimeventdate',$symbMap)){
-													$sqlIns1 .= ',verbatimeventdate';
-													$sqlIns2 .= ',"'.$value.'"';
-												}
-											}
+								foreach($activeFields as $aField){
+									$sqlIns1 .= ','.$aField;
+									$value = $recMap[$aField];
+									$fMap = $symbMap[$aField];
+									$type = (array_key_exists('type',$fMap)?$fMap['type']:'string');
+									$size = (array_key_exists('size',$fMap)?$fMap['size']:0);
+									if($type == 'numeric'){
+										if(is_numeric($value)){
+											$sqlIns2 .= ",".$value;
 										}
 										else{
-											if($size && strlen($value) > $size){
-												$value = substr($value,0,$size);
+											$sqlIns2 .= ",NULL";
+										}
+									}
+									elseif($type == 'date'){
+										$dateStr = $this->formatDate($value); 
+										if($dateStr){
+											$sqlIns2 .= ',"'.$dateStr.'"';
+										}
+										else{
+											$sqlIns2 .= ",NULL";
+											//Not valid date, thus load into verbatiumEventDate if it's the eventDate field 
+											if($aField == 'eventdate' && !array_key_exists('verbatimeventdate',$symbMap)){
+												$sqlIns1 .= ',verbatimeventdate';
+												$sqlIns2 .= ',"'.$value.'"';
 											}
-											if($value){
-												$sqlIns2 .= ',"'.$this->encodeString($value).'"';
-											}
-											else{
-												$sqlIns2 .= ',NULL';
-											}
+										}
+									}
+									else{
+										if($size && strlen($value) > $size){
+											$value = substr($value,0,$size);
+										}
+										if($value){
+											$sqlIns2 .= ',"'.$this->encodeString($value).'"';
+										}
+										else{
+											$sqlIns2 .= ',NULL';
 										}
 									}
 								}
 								$sqlIns = $sqlIns1.') '.$sqlIns2.')';
 								if($this->conn->query($sqlIns)){
 									$this->dataLoaded = 1;
+									$occid = $this->conn->insert_id;
 								}
 								else{
 									if($this->logFH){
@@ -863,7 +918,17 @@ class SpecProcessorManager {
 									}
 								}
 							}
-							$rs->close();
+							$rs->free();
+							//Load Exsiccati if it exists
+							if(isset($recMap['omenid']) && $occid){
+								$sqlExs ='INSERT INTO omexsiccatiocclink(omenid,occid) VALUES('.$recMap['omenid'].','.$occid.')';
+								if(!$this->conn->query($sqlExs)){
+									if($this->logFH){
+										$this->logOrEcho("ERROR: Unable to link record to exsiccati (".$recMap['omenid'].'-'.$occid.") \n");
+										$this->logOrEcho("\tSQL : $sqlExs \n");
+									}
+								}
+							}
 						}
 						unset($recMap);
 					}
