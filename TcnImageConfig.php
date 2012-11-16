@@ -57,7 +57,7 @@ $collArr = array(
 	,'tenn:lichens' => array('pmterm' => '/^(TENN-L-\d{7})\D*/', 'collid' => 31)
 	,'tenn:mycology' => array('pmterm' => '/^TENN\s*(\d{6}[A-Z]{0,1})\D*/', 'collid' => 7)
 	,'vsc:bryophytes' => array('pmterm' => '/(VSC-L\d{5})\D*/', 'collid' => 13)
-	,'vt:bryophytes' => array('pmterm' => '/(UVMVT\d{5,6})\D*/i', 'collid' => 9)
+	,'vt:bryophytes' => array('pmterm' => '/(UVMVT\d{4,6})\D*/i', 'collid' => 9)
 	,'vt:lichens' => array('pmterm' => '/(UVMVT\d{6})\D*/i', 'collid' => 39)
 	,'wis:lichens' => array('pmterm' => '/^(WIS-L-\d{7})\D*/', 'collid' => 22)
 	,'wtu:bryophytes' => array('pmterm' => '/^(WTU-B-\d{6})\D*/', 'collid' => 8)
