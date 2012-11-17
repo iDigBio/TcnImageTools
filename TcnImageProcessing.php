@@ -729,6 +729,20 @@ class SpecProcessorManager {
 							}
 						}
 						
+						//If verbatimEventDate exists and eventDate doesn't, try to convert 
+						if(!array_key_exists('eventdate',$recMap) || !$recMap['eventdate']){
+							if(array_key_exists('verbatimeventdate',$recMap) && $recMap['verbatimeventdate']){
+								$dateStr = $this->formatDate($recMap['verbatimeventdate']); 
+								if($dateStr){
+									$recMap['eventdate'] = $dateStr;
+									if($dateStr == $recMap['verbatimeventdate']) unset($recMap['verbatimeventdate']);
+									if(!array_key_exists('eventdate',$symbMap)){
+										$symbMap['eventdate']['type'] = 'date';
+									}
+								}
+							}
+						}
+						
 						//If exsiccatiTitle and exsiccatiNumber exists but ometid (title number) does not
 						if(array_key_exists('exsiccatinumber',$recMap) && $recMap['exsiccatinumber']){
 							if(array_key_exists('exsiccatititle',$recMap) && $recMap['exsiccatititle'] && (!array_key_exists('ometid',$recMap) || !$recMap['ometid'])){
@@ -796,7 +810,7 @@ class SpecProcessorManager {
 								$updateValueArr = array();
 								$occRemarkArr = array();
 								foreach($activeFields as $activeField){
-									$activeValue = $recMap[$activeField];
+									$activeValue = $this->cleanString($recMap[$activeField]);
 									if(!trim($r[$activeField])){
 										//Field is empty for existing record, thus load new data 
 										$type = (array_key_exists('type',$symbMap[$activeField])?$symbMap[$activeField]['type']:'string');
@@ -811,16 +825,16 @@ class SpecProcessorManager {
 											}
 										}
 										elseif($type == 'date'){
-											if(preg_match('/^\d{4}-\d{2}-\d{2}$/', $activeValue)){
+											$dateStr = $this->formatDate($activeValue); 
+											if($dateStr){
 												$updateValueArr[$activeField] = $activeValue;
 											} 
-											elseif(($dateStr = strtotime($activeValue))){
-												$updateValueArr[$activeField] = date('Y-m-d H:i:s', $dateStr);
-											}
 											else{
 												//Not valid date, thus load into verbatiumEventDate or occRemarks
-												if($activeField == 'eventdate' && !array_key_exists('verbatimeventdate',$updateValueArr)){
-													$updateValueArr['verbatimeventdate'] = $activeValue;
+												if($activeField == 'eventdate'){
+													if(!array_key_exists('verbatimeventdate',$updateValueArr) || $updateValueArr['verbatimeventdate']){
+														$updateValueArr['verbatimeventdate'] = $activeValue;
+													}
 												}
 												else{
 													$occRemarkArr[$activeField] = $activeValue;
@@ -868,7 +882,7 @@ class SpecProcessorManager {
 								$sqlIns2 = 'VALUES ('.$this->collId.',"'.$catNum.'","unprocessed"';
 								foreach($activeFields as $aField){
 									$sqlIns1 .= ','.$aField;
-									$value = $recMap[$aField];
+									$value = $this->cleanString($recMap[$aField]);
 									$fMap = $symbMap[$aField];
 									$type = (array_key_exists('type',$fMap)?$fMap['type']:'string');
 									$size = (array_key_exists('size',$fMap)?$fMap['size']:0);
@@ -1134,7 +1148,6 @@ class SpecProcessorManager {
 		return $this->silent;
 	}
 
-
 	//Misc functions
 	private function formatDate($inStr){
 		$dateStr = trim($inStr);
@@ -1144,6 +1157,7 @@ class SpecProcessorManager {
 		$m = '00';
 		$d = '00';
 		if(preg_match('/\d{2}:\d{2}:\d{2}/',$dateStr,$match)){
+			//Extract time
 			$t = $match[0];
 		}
 		if(preg_match('/^(\d{4})-(\d{1,2})-(\d{1,2})\D*/',$dateStr,$match)){
@@ -1260,26 +1274,39 @@ class SpecProcessorManager {
 	}
 	
 	private function encodeString($inStr){
- 		global $charset;
- 		$retStr = trim($inStr);
- 		if($inStr){
+		global $charset;
+		$retStr = trim($inStr);
+		if($inStr){
 			if(strtolower($charset) == "utf-8" || strtolower($charset) == "utf8"){
-				if(mb_detect_encoding($inStr,'UTF-8,ISO-8859-1') == "ISO-8859-1"){
+				if(mb_detect_encoding($inStr,'ISO-8859-1,UTF-8') == "ISO-8859-1"){
 					$retStr = utf8_encode($inStr);
 					//$retStr = iconv("ISO-8859-1//TRANSLIT","UTF-8",$inStr);
 				}
 			}
 			elseif(strtolower($charset) == "iso-8859-1"){
-				if(mb_detect_encoding($inStr,'ISO-8859-1,UTF-8') == "UTF-8"){
+				if(mb_detect_encoding($inStr,'UTF-8,ISO-8859-1') == "UTF-8"){
 					$retStr = utf8_decode($inStr);
 					//$retStr = iconv("UTF-8","ISO-8859-1//TRANSLIT",$inStr);
 				}
 			}
- 		}
+		}
 		return $retStr;
 	}
 
-	public function logOrEcho($str){
+	private function cleanString($inStr){
+		$retStr = trim($inStr);
+		$retStr = str_replace(chr(10),' ',$retStr);
+		$retStr = str_replace(chr(11),' ',$retStr);
+		$retStr = str_replace(chr(13),' ',$retStr);
+		$retStr = str_replace(chr(20),' ',$retStr);
+		$retStr = str_replace(chr(30),' ',$retStr);
+		$retStr = str_replace('"',"&quot;",$retStr);
+		$retStr = str_replace("'","&apos;",$retStr);
+		//$retStr = $this->conn->real_escape_string($retStr);
+		return $retStr;
+	}
+
+	private function logOrEcho($str){
 		if(!$this->silent){
 			if($this->logFH){
 				fwrite($this->logFH,$str);
