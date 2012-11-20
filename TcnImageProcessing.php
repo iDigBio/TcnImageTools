@@ -1,5 +1,5 @@
 <?php
-require_once("TcnImageConfig.php");
+require_once("TcnImageConfig_local.php");
 require_once("DbConnection.php");
 
 //-------------------------------------------------------------------------------------------//
@@ -796,10 +796,11 @@ class SpecProcessorManager {
 							}
 							//Check to see if matching record already exists in database
 							$activeFields = array_keys($recMap);
-							unset($activeFields[array_search('ometid',$activeFields)]);
-							unset($activeFields[array_search('omenid',$activeFields)]);
-							unset($activeFields[array_search('exsiccatititle',$activeFields)]);
-							unset($activeFields[array_search('exsiccatinumber',$activeFields)]);
+							if(array_search('ometid',$activeFields) !== false) unset($activeFields[array_search('ometid',$activeFields)]);
+							if(array_search('omenid',$activeFields) !== false) unset($activeFields[array_search('omenid',$activeFields)]);
+							if(array_search('exsiccatititle',$activeFields) !== false) unset($activeFields[array_search('exsiccatititle',$activeFields)]);
+							if(array_search('exsiccatinumber',$activeFields) !== false) unset($activeFields[array_search('exsiccatinumber',$activeFields)]);
+
 							$sql = 'SELECT occid,'.(!array_key_exists('occurrenceremarks',$recMap)?'occurrenceremarks,':'').implode(',',$activeFields).' '.
 								'FROM omoccurrences WHERE collid = '.$this->collId.' AND (catalognumber = '.(is_numeric($catNum)?$catNum:'"'.$catNum.'"').') ';
 							//echo $sql;
