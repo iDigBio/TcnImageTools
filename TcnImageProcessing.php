@@ -76,6 +76,7 @@ class SpecProcessorManager {
 	private $dataLoaded = 0;
 	
 	function __construct(){
+		ini_set('memory_limit','512M');
 		ini_set('auto_detect_line_endings', true);
 	}
 
@@ -435,7 +436,6 @@ class SpecProcessorManager {
 			}
 		}
 
-		ini_set('memory_limit','512M');
 		$tmpImg = imagecreatetruecolor($newWidth,$newHeight);
 		//imagecopyresampled($tmpImg,$sourceImg,0,0,0,0,$newWidth,$newHeight,$sourceWidth,$sourceHeight);
 		imagecopyresized($tmpImg,$this->sourceGdImg,0,0,0,0,$newWidth,$newHeight,$sourceWidth,$sourceHeight);
