@@ -1,5 +1,5 @@
 <?php
-require_once("TcnImageConfig_local.php");
+require_once("TcnImageConfig.php");
 require_once("DbConnection.php");
 
 //-------------------------------------------------------------------------------------------//
