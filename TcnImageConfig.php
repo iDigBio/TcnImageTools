@@ -38,6 +38,7 @@ $dbMetadata = 1;
 $collArr = array(
 	'asu:lichens' => array('pmterm' => '/^(ASU\d{7})\D*/', 'collid' => 7)
 	,'bry:lichens' => array('pmterm' => '/^(BRY-L-\d{7})\D*/', 'collid' => 13)
+	,'dbg:mycology' => array('pmterm' => '/^(\d{1,5}[A-Z])\D*/', 'collid' => 1) 
 	,'duke:bryophytes' => array('pmterm' => '/^(\d{7})\D*/', 'collid' => 6)
 	,'duke:lichens' => array('pmterm' => '/^(\d{7})\D*/', 'collid' => 28)
 	,'f:bryophytes' => array('pmterm' => '/^(C\d{7}F)\D*/', 'collid' => 1)
@@ -46,6 +47,7 @@ $collArr = array(
 	,'mich:bryophytes' => array('pmterm' => '/^(\d{1,7})\D*/', 'collid' => 7)
 	,'mich:lichens' => array('pmterm' => '/^(\d{1,7})\D*/', 'collid' => 32)
 	,'mich:mycology' => array('pmterm' => '/^MICH-F-(\d{1,7}[A-Z]{0,1})\D*/', 'collid' => 10)
+	,'mo:bryophytes' => array('pmterm' => '/^MO-(\d7)/', 'collid' => 1)
 	,'msc:bryophytes' => array('pmterm' => '/^(MSC-B-\d{7})\D*/', 'collid' => 16)
 	,'ncu:mycology' => array('pmterm' => '/^NCU-F-(\d{7})\D*/', 'collid' => 14)
 	,'ny:lichens' => array('pmterm' => '/0*([1-9]{1}\d{0,7})\D*/', 'collid' => 2)
