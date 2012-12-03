@@ -801,135 +801,140 @@ class SpecProcessorManager {
 							if(array_search('exsiccatititle',$activeFields) !== false) unset($activeFields[array_search('exsiccatititle',$activeFields)]);
 							if(array_search('exsiccatinumber',$activeFields) !== false) unset($activeFields[array_search('exsiccatinumber',$activeFields)]);
 
-							$sql = 'SELECT occid,'.(!array_key_exists('occurrenceremarks',$recMap)?'occurrenceremarks,':'').implode(',',$activeFields).' '.
+							$sql = 'SELECT occid'.(!array_key_exists('occurrenceremarks',$recMap)?',occurrenceremarks':'').
+								($activeFields?','.implode(',',$activeFields):'').' '.
 								'FROM omoccurrences WHERE collid = '.$this->collId.' AND (catalognumber = '.(is_numeric($catNum)?$catNum:'"'.$catNum.'"').') ';
 							//echo $sql;
 							$rs = $this->conn->query($sql);
 							if($r = $rs->fetch_assoc()){
 								//Record already exists, thus just append values to record
 								$occid = $r['occid'];
-								$updateValueArr = array();
-								$occRemarkArr = array();
-								foreach($activeFields as $activeField){
-									$activeValue = $this->cleanString($recMap[$activeField]);
-									if(!trim($r[$activeField])){
-										//Field is empty for existing record, thus load new data 
-										$type = (array_key_exists('type',$symbMap[$activeField])?$symbMap[$activeField]['type']:'string');
-										$size = (array_key_exists('size',$symbMap[$activeField])?$symbMap[$activeField]['size']:0);
-										if($type == 'numeric'){
-											if(is_numeric($activeValue)){
-												$updateValueArr[$activeField] = $activeValue;
-											}
-											else{
-												//Not numeric, thus load into occRemarks 
-												$occRemarkArr[$activeField] = $activeValue;
-											}
-										}
-										elseif($type == 'date'){
-											$dateStr = $this->formatDate($activeValue); 
-											if($dateStr){
-												$updateValueArr[$activeField] = $activeValue;
-											} 
-											else{
-												//Not valid date, thus load into verbatiumEventDate or occRemarks
-												if($activeField == 'eventdate'){
-													if(!array_key_exists('verbatimeventdate',$updateValueArr) || $updateValueArr['verbatimeventdate']){
-														$updateValueArr['verbatimeventdate'] = $activeValue;
-													}
+								if($activeFields){
+									$updateValueArr = array();
+									$occRemarkArr = array();
+									foreach($activeFields as $activeField){
+										$activeValue = $this->cleanString($recMap[$activeField]);
+										if(!trim($r[$activeField])){
+											//Field is empty for existing record, thus load new data 
+											$type = (array_key_exists('type',$symbMap[$activeField])?$symbMap[$activeField]['type']:'string');
+											$size = (array_key_exists('size',$symbMap[$activeField])?$symbMap[$activeField]['size']:0);
+											if($type == 'numeric'){
+												if(is_numeric($activeValue)){
+													$updateValueArr[$activeField] = $activeValue;
 												}
 												else{
+													//Not numeric, thus load into occRemarks 
 													$occRemarkArr[$activeField] = $activeValue;
 												}
 											}
+											elseif($type == 'date'){
+												$dateStr = $this->formatDate($activeValue); 
+												if($dateStr){
+													$updateValueArr[$activeField] = $activeValue;
+												} 
+												else{
+													//Not valid date, thus load into verbatiumEventDate or occRemarks
+													if($activeField == 'eventdate'){
+														if(!array_key_exists('verbatimeventdate',$updateValueArr) || $updateValueArr['verbatimeventdate']){
+															$updateValueArr['verbatimeventdate'] = $activeValue;
+														}
+													}
+													else{
+														$occRemarkArr[$activeField] = $activeValue;
+													}
+												}
+											}
+											else{
+												//Type assumed to be a string
+												if($size && strlen($activeValue) > $size){
+													$activeValue = substr($activeValue,0,$size);
+												}
+												$updateValueArr[$activeField] = $activeValue;
+											}
+										}
+										elseif($activeValue != $r[$activeField]){
+											//Target field is not empty and values not equal, thus add value into occurrenceRemarks
+											$occRemarkArr[$activeField] = $activeValue;
+										}
+									}
+									$updateFrag = '';
+									foreach($updateValueArr as $k => $uv){
+										$updateFrag .= ','.$k.'="'.$this->encodeString($uv).'"';
+									}
+									if($occRemarkArr){
+										$occStr = '';
+										foreach($occRemarkArr as $k => $orv){
+											$occStr .= ','.$k.': '.$this->encodeString($orv);
+										} 
+										$updateFrag .= ',occurrenceremarks="'.($r['occurrenceremarks']?$r['occurrenceremarks'].'; ':'').substr($occStr,1).'"';
+									}
+									if($updateFrag){
+										$sqlUpdate = 'UPDATE omoccurrences SET '.substr($updateFrag,1).' WHERE occid = '.$occid;
+										if($this->conn->query($sqlUpdate)){
+											$this->dataLoaded = 1;
 										}
 										else{
-											//Type assumed to be a string
-											if($size && strlen($activeValue) > $size){
-												$activeValue = substr($activeValue,0,$size);
-											}
-											$updateValueArr[$activeField] = $activeValue;
+											$this->logOrEcho("ERROR: Unable to update existing record with new skeletal record \n");
+											$this->logOrEcho("\tSQL : $sqlUpdate \n");
 										}
-									}
-									elseif($activeValue != $r[$activeField]){
-										//Target field is not empty and values not equal, thus add value into occurrenceRemarks
-										$occRemarkArr[$activeField] = $activeValue;
-									}
-								}
-								$updateFrag = '';
-								foreach($updateValueArr as $k => $uv){
-									$updateFrag .= ','.$k.'="'.$this->encodeString($uv).'"';
-								}
-								if($occRemarkArr){
-									$occStr = '';
-									foreach($occRemarkArr as $k => $orv){
-										$occStr .= ','.$k.': '.$this->encodeString($orv);
-									} 
-									$updateFrag .= ',occurrenceremarks="'.($r['occurrenceremarks']?$r['occurrenceremarks'].'; ':'').substr($occStr,1).'"';
-								}
-								if($updateFrag){
-									$sqlUpdate = 'UPDATE omoccurrences SET '.substr($updateFrag,1).' WHERE occid = '.$occid;
-									if($this->conn->query($sqlUpdate)){
-										$this->dataLoaded = 1;
-									}
-									else{
-										$this->logOrEcho("ERROR: Unable to update existing record with new skeletal record \n");
-										$this->logOrEcho("\tSQL : $sqlUpdate \n");
 									}
 								}
 							}
 							else{
 								//Insert new record
-								$sqlIns1 = 'INSERT INTO omoccurrences(collid,catalogNumber,processingstatus';
-								$sqlIns2 = 'VALUES ('.$this->collId.',"'.$catNum.'","unprocessed"';
-								foreach($activeFields as $aField){
-									$sqlIns1 .= ','.$aField;
-									$value = $this->cleanString($recMap[$aField]);
-									$fMap = $symbMap[$aField];
-									$type = (array_key_exists('type',$fMap)?$fMap['type']:'string');
-									$size = (array_key_exists('size',$fMap)?$fMap['size']:0);
-									if($type == 'numeric'){
-										if(is_numeric($value)){
-											$sqlIns2 .= ",".$value;
+								if($activeFields){
+									$sqlIns1 = 'INSERT INTO omoccurrences(collid,catalogNumber,processingstatus';
+									$sqlIns2 = 'VALUES ('.$this->collId.',"'.$catNum.'","unprocessed"';
+									foreach($activeFields as $aField){
+										$sqlIns1 .= ','.$aField;
+										$value = $this->cleanString($recMap[$aField]);
+										$fMap = $symbMap[$aField];
+										$type = (array_key_exists('type',$fMap)?$fMap['type']:'string');
+										$size = (array_key_exists('size',$fMap)?$fMap['size']:0);
+										if($type == 'numeric'){
+											if(is_numeric($value)){
+												$sqlIns2 .= ",".$value;
+											}
+											else{
+												$sqlIns2 .= ",NULL";
+											}
+										}
+										elseif($type == 'date'){
+											$dateStr = $this->formatDate($value); 
+											if($dateStr){
+												$sqlIns2 .= ',"'.$dateStr.'"';
+											}
+											else{
+												$sqlIns2 .= ",NULL";
+												//Not valid date, thus load into verbatiumEventDate if it's the eventDate field 
+												if($aField == 'eventdate' && !array_key_exists('verbatimeventdate',$symbMap)){
+													$sqlIns1 .= ',verbatimeventdate';
+													$sqlIns2 .= ',"'.$value.'"';
+												}
+											}
 										}
 										else{
-											$sqlIns2 .= ",NULL";
-										}
-									}
-									elseif($type == 'date'){
-										$dateStr = $this->formatDate($value); 
-										if($dateStr){
-											$sqlIns2 .= ',"'.$dateStr.'"';
-										}
-										else{
-											$sqlIns2 .= ",NULL";
-											//Not valid date, thus load into verbatiumEventDate if it's the eventDate field 
-											if($aField == 'eventdate' && !array_key_exists('verbatimeventdate',$symbMap)){
-												$sqlIns1 .= ',verbatimeventdate';
-												$sqlIns2 .= ',"'.$value.'"';
+											if($size && strlen($value) > $size){
+												$value = substr($value,0,$size);
+											}
+											if($value){
+												$sqlIns2 .= ',"'.$this->encodeString($value).'"';
+											}
+											else{
+												$sqlIns2 .= ',NULL';
 											}
 										}
 									}
-									else{
-										if($size && strlen($value) > $size){
-											$value = substr($value,0,$size);
-										}
-										if($value){
-											$sqlIns2 .= ',"'.$this->encodeString($value).'"';
-										}
-										else{
-											$sqlIns2 .= ',NULL';
-										}
+									$sqlIns = $sqlIns1.') '.$sqlIns2.')';
+									if($this->conn->query($sqlIns)){
+										$this->dataLoaded = 1;
+										$occid = $this->conn->insert_id;
 									}
-								}
-								$sqlIns = $sqlIns1.') '.$sqlIns2.')';
-								if($this->conn->query($sqlIns)){
-									$this->dataLoaded = 1;
-									$occid = $this->conn->insert_id;
-								}
-								else{
-									if($this->logFH){
-										$this->logOrEcho("ERROR: Unable to load new skeletal record \n");
-										$this->logOrEcho("\tSQL : $sqlIns \n");
+									else{
+										if($this->logFH){
+											$this->logOrEcho("ERROR: Unable to load new skeletal record \n");
+											$this->logOrEcho("\tSQL : $sqlIns \n");
+										}
 									}
 								}
 							}
