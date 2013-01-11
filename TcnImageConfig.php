@@ -42,6 +42,7 @@ $collArr = array(
 	,'duke:bryophytes' => array('pmterm' => '/^(\d{7})\D*/', 'collid' => 6)
 	,'duke:lichens' => array('pmterm' => '/^(\d{7})\D*/', 'collid' => 28)
 	,'f:bryophytes' => array('pmterm' => '/^(C\d{7}F)\D*/', 'collid' => 1)
+	,'fh:lichens' => array('pmterm' => '/^FH(\d{8})\D*/', 'collid' => 40)
 	,'ill:bryophytes' => array('pmterm' => '/^(ILL\d{8})\D*/', 'collid' => 20)
 	,'lsu:bryophytes' => array('pmterm' => '/^(LSU\d{8})\D*/', 'collid' => 18)
 	,'mich:bryophytes' => array('pmterm' => '/^(\d{1,7})\D*/', 'collid' => 7)
