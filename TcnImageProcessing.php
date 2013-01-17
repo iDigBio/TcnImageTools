@@ -42,7 +42,9 @@ class SpecProcessorManager {
 	private $title;
 	private $collectionName;
 	private $managementType;
-	private $patternMatchingTerm;
+	private $patternMatchingTerm;   //  pmterm from collArr, pattern match for filenames for collections and catalog numbers.
+	private $patternReplacingTerm = null;  // prpatt from collArr, pattern for replacement of parts of catalogNumber.
+	private $replacementTerm = '';  // prrepl from collArr, value to replace matches of patternReplacingTerm in catalogNumber.  
 	
 	private $sourcePathBase;
 	private $targetPathBase;
@@ -134,6 +136,18 @@ class SpecProcessorManager {
 				}
 			}
 			$this->patternMatchingTerm = $termArr['pmterm'];
+			if(array_key_exists('prpatt',$termArr)){
+				$this->patternReplacingTerm = $termArr['prpatt'];
+			} 
+			else{
+				$this->patternReplacingTerm = null;
+			}
+			if(array_key_exists('prrepl',$termArr)){
+				$this->replacementTerm = $termArr['prrepl'];
+			}
+			else{
+				$this->replacementTerm = '';
+			}			
 			
 			//Target path maintenance and verification
 			if(!file_exists($this->targetPathBase)){
@@ -488,6 +502,18 @@ class SpecProcessorManager {
 		}
 	}
 
+	/**
+	 * Extract a primary key (catalog number) from a string (e.g file name, catalogNumber field), 
+	 * applying patternMatchingTerm, and, if they apply, patternReplacingTerm, and 
+	 * replacement.  If patternMatchingTerm contains a backreference, 
+	 * and there is a match, the return value is the backreference.  If 
+	 * patternReplacingTerm and replacement are modified, they are applied 
+	 * before the result is returned. 
+	 * 
+	 * @param str  String from which to extract the catalogNumber
+	 * @return an empty string if there is no match of patternMatchingTerm on
+	 *         str, otherwise the match as described above. 
+	 */ 
 	private function getPrimaryKey($str){
 		$specPk = '';
 		if(preg_match($this->patternMatchingTerm,$str,$matchArr)){
@@ -496,6 +522,9 @@ class SpecProcessorManager {
 			}
 			else{
 				$specPk = $matchArr[0];
+			}
+			if ($this->patternReplacingTerm!=null) { 				
+				$specPk = preg_replace($this->patternReplacingTerm,$this->replacementTerm,$specPk);
 			}
 		}
 		return $specPk;
@@ -786,14 +815,9 @@ class SpecProcessorManager {
 						if($catNum){
 							$occid = 0;
 							//Check to see if regular expression term is needed to extract correct part of catalogNumber
-							if(preg_match($this->patternMatchingTerm,$catNum,$matchArr)){
-								if(array_key_exists(1,$matchArr) && $matchArr[1]){
-									$catNum = $matchArr[1];
-								}
-								else{
-									$catNum = $matchArr[0];
-								}
-							}
+							$deltaCatNum = $this->getPrimaryKey($catNum);
+							if ($deltaCatNum!='') { $catNum = $deltaCatNum; } 
+		
 							//Check to see if matching record already exists in database
 							$activeFields = array_keys($recMap);
 							if(array_search('ometid',$activeFields) !== false) unset($activeFields[array_search('ometid',$activeFields)]);
