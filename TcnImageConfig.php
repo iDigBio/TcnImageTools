@@ -50,6 +50,7 @@ $dbMetadata = 1;
 $collArr = array(
 	'asu:lichens' => array('pmterm' => '/^(ASU\d{7})\D*/', 'collid' => 7)
 	,'bry:lichens' => array('pmterm' => '/^(BRY-L-\d{7})\D*/', 'collid' => 13)
+         ,'colo:bryophytes' => array('pmterm' => '/^(COLO-B-\d{7})\D*/', 'collid' => 23)
 	,'dbg:mycology' => array('pmterm' => '/^(\d{1,5}[A-Z]{0,1})\D*/', 'collid' => 1) 
 	,'duke:bryophytes' => array('pmterm' => '/^(\d{7})\D*/', 'collid' => 6)
 	,'duke:lichens' => array('pmterm' => '/^(\d{7})\D*/', 'collid' => 28)
