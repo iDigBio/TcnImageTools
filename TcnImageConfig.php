@@ -35,6 +35,18 @@ $keepOrig = 1;
 //0 = write image metadata to file; 1 = write metadata to Symbiota database
 $dbMetadata = 1;
 
+/**
+ * Array of parameters for collections to process.
+ * 'collection:project' => array( 
+ *     'pmterm' => '/A(\d{8})\D+/', // regular expression to match collectionCode and catalogNumber in filename, first backreference is used as the catalogNumber. 
+ *     'collid' => 0,               // symbiota collid corresponding with the pterm pattern.
+ *     'prpatt' => '/^/',           // optional regular expression for match on catalogNumber to be replaced with prrepl. 
+ *     'prrepl' => 'barcode-'       // optional replacement to apply for prpatt matches on catalogNumber.
+ *     // given above description, 'A01234567.jpg' will yield catalogNumber = 'barcode-01234567'
+ * )
+ * 
+ */
+
 $collArr = array(
 	'asu:lichens' => array('pmterm' => '/^(ASU\d{7})\D*/', 'collid' => 7)
 	,'bry:lichens' => array('pmterm' => '/^(BRY-L-\d{7})\D*/', 'collid' => 13)
@@ -42,7 +54,7 @@ $collArr = array(
 	,'duke:bryophytes' => array('pmterm' => '/^(\d{7})\D*/', 'collid' => 6)
 	,'duke:lichens' => array('pmterm' => '/^(\d{7})\D*/', 'collid' => 28)
 	,'f:bryophytes' => array('pmterm' => '/^(C\d{7}F)\D*/', 'collid' => 1)
-	,'fh:lichens' => array('pmterm' => '/^FH(\d{8})\D*/', 'collid' => 40)
+	,'fh:lichens' => array('pmterm' => '/^FH(\d{8})\D*/', 'collid' => 40, 'prpatt' => '/^/', 'prrepl' => 'barcode-')
 	,'flas:lichens' => array('pmterm' => '/^(FLAS\sL\d{1,7})\D*/', 'collid' => 35)
 	,'ill:bryophytes' => array('pmterm' => '/^(ILL\d{8})\D*/', 'collid' => 20)
 	,'lsu:bryophytes' => array('pmterm' => '/^(LSU\d{8})\D*/', 'collid' => 18)
