@@ -199,6 +199,9 @@ class SpecProcessorManager {
 			$this->logOrEcho('Image upload complete for '.$this->targetPathFrag."\n");
 			$this->logOrEcho("-----------------------------------------------------\n\n");
 			
+			//Uopdate Statistics
+			$this->conn->query('CALL UpdateCollectionStats('.$this->collId.')');
+			
 			//Close connection or MD output file
 			if($this->dbMetadata){
 				 if(!($this->conn === false)) $this->conn->close();
