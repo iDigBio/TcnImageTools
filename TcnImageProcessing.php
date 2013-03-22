@@ -1,6 +1,19 @@
 <?php
 require_once("TcnImageConfig.php");
 require_once("DbConnection.php");
+if ($symbiotaClassPath!=null) {
+	// Check for the symbiota class files used herein for parsing 
+	// batch files of xml formatted strucutured data.
+	// Fail gracefully if they aren't available.
+	// Note also that class_exists() is checked for before
+	// invocation of these parsers in processFolder().
+	if (file_exists("$symbiotaClassPath/SpecProcessorGPI.php")) { 
+		@require_once("$symbiotaClassPath/SpecProcessorGPI.php");
+	}
+	if (file_exists("$symbiotaClassPath/SpecProcessorNEVP.php")) {  
+		@require_once("$symbiotaClassPath/SpecProcessorNEVP.php");
+	}
+}
 
 //-------------------------------------------------------------------------------------------//
 //End of variable assignment. Don't modify code below.
@@ -13,6 +26,8 @@ $specManager->setDbMetadata($dbMetadata);
 $specManager->setSourcePathBase($sourcePathBase);
 $specManager->setTargetPathBase($targetPathBase);
 $specManager->setImgUrlBase($imgUrlBase);
+$specManager->setServerRoot($serverRoot);
+$specManager->setSymbiotaClassPath($symbiotaClassPath);
 $specManager->setWebPixWidth($webPixWidth);
 $specManager->setTnPixWidth($tnPixWidth);
 $specManager->setLgPixWidth($lgPixWidth);
@@ -51,6 +66,8 @@ class SpecProcessorManager {
 	private $targetPathFrag;
 	private $origPathFrag;
 	private $imgUrlBase;
+	private $symbiotaClassPath = null;
+	private $serverRoot;
 	
 	private $webPixWidth = 1200;
 	private $tnPixWidth = 130;
@@ -232,6 +249,7 @@ class SpecProcessorManager {
 
 	private function processFolder($pathFrag = ''){
 		set_time_limit(2000);
+		$this->logOrEcho("Processing: ".$this->sourcePathBase.$pathFrag." \n");
 		//Read file and loop through images
 		if(!file_exists($this->sourcePathBase.$pathFrag)){
 			$this->logOrEcho("\tSource path does not exist: ".$this->sourcePathBase.$pathFrag." \n");
@@ -242,6 +260,7 @@ class SpecProcessorManager {
 				if($fileName != "." && $fileName != ".." && $fileName != ".svn"){
 					if(is_file($this->sourcePathBase.$pathFrag.$fileName)){
 						if(stripos($fileName,'_tn.jpg') === false && stripos($fileName,'_lg.jpg') === false){
+							$this->logOrEcho("Processing File: ".$fileName." \n");
 							$fileExt = strtolower(substr($fileName,strrpos($fileName,'.')));
 							if($fileExt == ".jpg"){
 								$this->processImageFile($fileName,$pathFrag);
@@ -252,9 +271,12 @@ class SpecProcessorManager {
 							}
 							elseif(($fileExt == ".csv" || $fileExt == ".txt" || $fileExt == ".tab" || $fileExt == ".dat") && (stripos($fileName,'metadata') !== false || stripos($fileName,'skelet') !== false)){
 								//Is skeletal file exists. Append data to database records
-								$this->processSkeletalFile($this->sourcePathBase.$pathFrag.$fileName);
+								$this->processSkeletalFile($this->sourcePathBase.$pathFrag.$fileName); 
 							}
-								else{
+							elseif($fileExt==".xml") {
+								$this->processXMLFile($fileName,$pathFrag);
+							}
+							else{
 								$this->logOrEcho("\tERROR: File skipped, not a supported image file: ".$fileName." \n");
 							}
 						}
@@ -269,6 +291,82 @@ class SpecProcessorManager {
 			$this->logOrEcho("\tERROR: unable to access source directory: ".$this->sourcePathBase.$pathFrag." \n");
 		}
 		if($imgFH) closedir($imgFH);
+	}
+
+	/**
+	 * Examine an xml file, and if it conforms to supported expectations, 
+	 * add the data it contains to the Symbiota database.
+	 * Currently supported expectations are: (1) the GPI/ALUKA/LAPI schema
+	 * and (2) RDF/XML containing oa/oad annotations asserting new occurrence
+	 * records in dwcFP, supporting the NEVP TCN.
+	 *  
+	 * @param fileName the name of the xml file to process.
+	 * @param pathFrag the path from sourcePathBase to the file to process. 
+	 */
+	private function processXMLFile($fileName,$pathFrag='') { 
+		 $this->logOrEcho($fileName." is xml\n");
+		 if ($this->symbiotaClassPath!=null) {
+			  $foundSchema = false;
+			  $xml = XMLReader::open($this->sourcePathBase.$pathFrag.$fileName);
+			  if($xml->read())  {
+					$this->logOrEcho($fileName." first node: ". $xml->name . "\n");
+					if ($xml->name=="DataSet") {	 
+						 $xml = XMLReader::open($this->sourcePathBase.$pathFrag.$fileName);
+						 $lapischema = $this->serverRoot . "/collections/admin/schemas/lapi_schema_v2.xsd";
+						 $xml->setParserProperty(XMLReader::VALIDATE, true);
+						 if (file_exists($lapischema)) { 
+							  $isLapi = $xml->setSchema($lapischema);
+						 } 
+						 else { 
+							  $this->logOrEcho("\tERROR: Can't find $lapischema\n");
+						 }
+						 $this->logOrEcho($fileName." valid lapi xml:" . $xml->isValid() . " " . $isLapi .  "\n");
+						 if ($xml->isValid() && $isLapi) {
+							  // File complies with the Aluka/LAPI/GPI schema
+							  $this->logOrEcho('Processing GPI batch file: '.$pathFrag.$fileName."\n");
+							  if (class_exists(GPIProcessor)) { 
+									$processor = new GPIProcessor();
+									$foundSchema = $processor->process($this->sourcePathBase.$pathFrag.$fileName);
+							  } 
+							  else { 
+									// fail gracefully if this instalation isn't configured with this parser.
+									$this->logOrEcho("\tERROR: SpecProcessorGPI.php not available.\n");
+							  }
+						 }
+					}
+					elseif ($xml->name=="rdf:RDF") { 
+						 $this->logOrEcho($fileName." has oa:" . $xml->lookupNamespace("oa"). "\n");
+						 $this->logOrEcho($fileName." has oad:" . $xml->lookupNamespace("oad"). "\n");
+						 $this->logOrEcho($fileName." has dwcFP:" . $xml->lookupNamespace("dwcFP"). "\n");
+						 $hasAnnotation = $xml->lookupNamespace("oa");
+						 $hasDataAnnotation = $xml->lookupNamespace("oad");
+						 $hasdwcFP = $xml->lookupNamespace("dwcFP");
+						 // Note: contra the PHP xmlreader documentation, lookupNamespace
+						 // returns the namespace string not a boolean.
+						 if ($hasAnnotation && $hasDataAnnotation && $hasdwcFP) {
+							  // File is likely an annotation containing DarwinCore data.
+							  $this->logOrEcho('Processing RDF/XML annotation file: '.$pathFrag.$fileName."\n");
+							  if (class_exists(NEVPProcessor)) { 
+									$processor = new NEVPProcessor();
+									$foundSchema = $processor->process($this->sourcePathBase.$pathFrag.$fileName);
+							  }
+							  else { 
+									// fail gracefully if this instalation isn't configured with this parser.
+									$this->logOrEcho("\tERROR: SpecProcessorNEVP.php not available.\n");
+							  }
+						 }
+					}
+					if ($foundSchema) { 
+						 $this->logOrEcho('Processed: '.$pathFrag.$fileName."\n");
+					} 
+					else { 
+						 $this->logOrEcho("\tERROR: Unable to match ".$pathFrag.$fileName." to a known schema.\n");
+					}
+			  } 
+			  else { 
+					$this->logOrEcho("\tERROR: XMLReader couldn't read ".$pathFrag.$fileName."\n");
+			  }
+		 }
 	}
 
 	private function processImageFile($fileName,$pathFrag = ''){
@@ -515,7 +613,7 @@ class SpecProcessorManager {
 	 * 
 	 * @param str  String from which to extract the catalogNumber
 	 * @return an empty string if there is no match of patternMatchingTerm on
-	 *         str, otherwise the match as described above. 
+	 *        str, otherwise the match as described above. 
 	 */ 
 	private function getPrimaryKey($str){
 		$specPk = '';
@@ -1078,6 +1176,14 @@ class SpecProcessorManager {
 
 	public function getImgUrlBase(){
 		return $this->imgUrlBase;
+	}
+
+	public function setSymbiotaClassPath($path) { 
+		$this->symbiotaClassPath = $path;
+	}
+
+	public function setServerRoot($path) { 
+		$this->serverRoot = $path;
 	}
 
 	public function setWebPixWidth($w){
