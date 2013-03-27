@@ -8,6 +8,13 @@ $targetPathBase = '';
 $imgUrlBase = 'http://storage.idigbio.org/';
 //Path to where log files will be placed
 $logPath = $sourcePathBase;
+//Full path to Symbiota project root folder
+$serverRoot = '/var/www/html/symbiota';				
+// Path to Symbiota Class Files, set to null if class files are 
+// not available.  Correct path is required for the processing of 
+// xml batch files.
+// $symbiotaClassPath = $serverRoot."/classes/";
+$symbiotaClassPath = null;
 
 //If silent is set, script will produce not produce a log file.
 $silent = 0;
