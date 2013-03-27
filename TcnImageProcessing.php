@@ -249,7 +249,7 @@ class SpecProcessorManager {
 
 	private function processFolder($pathFrag = ''){
 		set_time_limit(2000);
-		$this->logOrEcho("Processing: ".$this->sourcePathBase.$pathFrag." \n");
+		//$this->logOrEcho("Processing: ".$this->sourcePathBase.$pathFrag." \n");
 		//Read file and loop through images
 		if(!file_exists($this->sourcePathBase.$pathFrag)){
 			$this->logOrEcho("\tSource path does not exist: ".$this->sourcePathBase.$pathFrag." \n");
