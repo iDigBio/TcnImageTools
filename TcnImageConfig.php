@@ -57,6 +57,7 @@ $dbMetadata = 1;
 $collArr = array(
 	'asu:lichens' => array('pmterm' => '/^(ASU\d{7})\D*/', 'collid' => 7)
 	,'bry:lichens' => array('pmterm' => '/^(BRY-L-\d{7})\D*/', 'collid' => 13)
+	,'chrb:lichens' => array('pmterm' => '/^(CHRB-L-\d{7})\D*/', 'collid' => 47)
 	,'colo:bryophytes' => array('pmterm' => '/^(COLO-B-\d{7})\D*/', 'collid' => 23)
 	,'dbg:mycology' => array('pmterm' => '/^(\d{1,5}[A-Z]{0,1})\D*/', 'collid' => 1) 
 	,'duke:bryophytes' => array('pmterm' => '/^(\d{7})\D*/', 'collid' => 6)
@@ -65,6 +66,7 @@ $collArr = array(
 	,'fh:bryophytes' => array('pmterm' => '/^FH(\d{8})\D*/', 'collid' => 22, 'prpatt' => '/^/', 'prrepl' => 'barcode-')
 	,'fh:lichens' => array('pmterm' => '/^FH(\d{8})\D*/', 'collid' => 40, 'prpatt' => '/^/', 'prrepl' => 'barcode-')
 	,'fh:mycology' => array('pmterm' => '/^FH(\d{8})\D*/', 'collid' => 22, 'prpatt' => '/^/', 'prrepl' => 'barcode-')
+	,'flas:bryophytes' => array('pmterm' => '/^(FLAS\s{1}B\d{1,7})\D*/', 'collid' => 14)
 	,'flas:lichens' => array('pmterm' => '/^(FLAS\s{1}L\d{1,7})\D*/', 'collid' => 35)
 	,'ill:bryophytes' => array('pmterm' => '/^(ILL\d{8})\D*/', 'collid' => 20)
 	,'lsu:bryophytes' => array('pmterm' => '/^(LSU\d{8})\D*/', 'collid' => 18)
@@ -90,6 +92,7 @@ $collArr = array(
 	,'tenn:lichens' => array('pmterm' => '/^(TENN-L-\d{7})\D*/', 'collid' => 31)
 	,'tenn:mycology' => array('pmterm' => '/^TENN\s*(\d{6}[A-Z]{0,1})\D*/', 'collid' => 7)
 	,'uc:lichens' => array('pmterm' => '/^(UC\d{7})\D*/', 'collid' => 36)
+	,'uc:mycology' => array('pmterm' => '/^(UC\d{7})\D*/', 'collid' => 17)
 	,'vsc:bryophytes' => array('pmterm' => '/(VSC-L\d{5})\D*/', 'collid' => 13)
 	,'vt:bryophytes' => array('pmterm' => '/(UVMVT\d{4,6})\D*/i', 'collid' => 9)
 	,'vt:lichens' => array('pmterm' => '/(UVMVT\d{6})\D*/i', 'collid' => 39)
