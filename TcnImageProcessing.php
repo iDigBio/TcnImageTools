@@ -304,12 +304,11 @@ class SpecProcessorManager {
 	 * @param pathFrag the path from sourcePathBase to the file to process. 
 	 */
 	private function processXMLFile($fileName,$pathFrag='') { 
-		 $this->logOrEcho($fileName." is xml\n");
 		 if ($this->symbiotaClassPath!=null) {
 			  $foundSchema = false;
 			  $xml = XMLReader::open($this->sourcePathBase.$pathFrag.$fileName);
 			  if($xml->read())  {
-					$this->logOrEcho($fileName." first node: ". $xml->name . "\n");
+					// $this->logOrEcho($fileName." first node: ". $xml->name . "\n");
 					if ($xml->name=="DataSet") {	 
 						 $xml = XMLReader::open($this->sourcePathBase.$pathFrag.$fileName);
 						 $lapischema = $this->serverRoot . "/collections/admin/schemas/lapi_schema_v2.xsd";
@@ -320,13 +319,17 @@ class SpecProcessorManager {
 						 else { 
 							  $this->logOrEcho("\tERROR: Can't find $lapischema\n");
 						 }
-						 $this->logOrEcho($fileName." valid lapi xml:" . $xml->isValid() . " " . $isLapi .  "\n");
+						 // $this->logOrEcho($fileName." valid lapi xml:" . $xml->isValid() . " [" . $isLapi .  "]\n");
 						 if ($xml->isValid() && $isLapi) {
 							  // File complies with the Aluka/LAPI/GPI schema
 							  $this->logOrEcho('Processing GPI batch file: '.$pathFrag.$fileName."\n");
 							  if (class_exists(GPIProcessor)) { 
 									$processor = new GPIProcessor();
-									$foundSchema = $processor->process($this->sourcePathBase.$pathFrag.$fileName);
+									$result = $processor->process($this->sourcePathBase.$pathFrag.$fileName);
+									$foundSchema = $result->couldparse;
+									if (!$foundSchema || $result->failurecount>0) {
+										$this->logOrEcho("\tERROR: Errors processing $fileName: $result->errors.\n");
+									}
 							  } 
 							  else { 
 									// fail gracefully if this instalation isn't configured with this parser.
@@ -335,9 +338,9 @@ class SpecProcessorManager {
 						 }
 					}
 					elseif ($xml->name=="rdf:RDF") { 
-						 $this->logOrEcho($fileName." has oa:" . $xml->lookupNamespace("oa"). "\n");
-						 $this->logOrEcho($fileName." has oad:" . $xml->lookupNamespace("oad"). "\n");
-						 $this->logOrEcho($fileName." has dwcFP:" . $xml->lookupNamespace("dwcFP"). "\n");
+						 // $this->logOrEcho($fileName." has oa:" . $xml->lookupNamespace("oa"). "\n");
+						 // $this->logOrEcho($fileName." has oad:" . $xml->lookupNamespace("oad"). "\n");
+						 // $this->logOrEcho($fileName." has dwcFP:" . $xml->lookupNamespace("dwcFP"). "\n");
 						 $hasAnnotation = $xml->lookupNamespace("oa");
 						 $hasDataAnnotation = $xml->lookupNamespace("oad");
 						 $hasdwcFP = $xml->lookupNamespace("dwcFP");
@@ -348,7 +351,11 @@ class SpecProcessorManager {
 							  $this->logOrEcho('Processing RDF/XML annotation file: '.$pathFrag.$fileName."\n");
 							  if (class_exists(NEVPProcessor)) { 
 									$processor = new NEVPProcessor();
-									$foundSchema = $processor->process($this->sourcePathBase.$pathFrag.$fileName);
+									$result = $processor->process($this->sourcePathBase.$pathFrag.$fileName);
+									$foundSchema = $result->couldparse;
+									if (!$foundSchema || $result->failurecount>0) {
+										$this->logOrEcho("\tERROR: Errors processing $fileName: $result->errors.\n");
+									}
 							  }
 							  else { 
 									// fail gracefully if this instalation isn't configured with this parser.
@@ -356,22 +363,23 @@ class SpecProcessorManager {
 							  }
 						 }
 					}
-					if ($foundSchema) { 
-						$this->logOrEcho('Processed: '.$pathFrag.$fileName."\n");
+					if ($foundSchema>0) { 
+						$this->logOrEcho("Proccessed $pathFrag$fileName, records: $result->recordcount, success: $result->successcount, failures: $result->failurecount, inserts: $result->insertcount, updates: $result->updatecount.\n");
 						if($this->keepOrig){
-							$fileName = substr($filePath,strrpos($filePath,'/')).'.orig_'.time();
+							$oldFile = $this->sourcePathBase.$pathFrag.$fileName;
+							$newFileName = substr($filePath,strrpos($filePath,'/')).'orig_'.time().'.'.$fileName;
 							if(!file_exists($this->targetPathBase.$this->targetPathFrag.'orig_xml')){
 								mkdir($this->targetPathBase.$this->targetPathFrag.'orig_xml');
 							}
-							if(!rename($filePath,$this->targetPathBase.$this->targetPathFrag.'orig_xml'.$fileName)){
-								$this->logOrEcho("\tERROR: unable to move (".$filePath.") \n");
+							if(!rename($oldFile,$this->targetPathBase.$this->targetPathFrag.'orig_xml/'.$newFileName)){
+								$this->logOrEcho("\tERROR: unable to move (".$fileName.") \n");
 							}
-						 } else {
-							if(!unlink($filePath)){
-								$this->logOrEcho("\tERROR: unable to delete file (".$filePath.") \n");
+						 } 
+						 else {
+							if(!unlink($oldFile)){
+								$this->logOrEcho("\tERROR: unable to delete file (".$fileName.") \n");
 							}
 						}
-
 					} 
 					else { 
 						 $this->logOrEcho("\tERROR: Unable to match ".$pathFrag.$fileName." to a known schema.\n");
