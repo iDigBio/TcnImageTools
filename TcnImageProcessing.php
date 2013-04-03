@@ -357,7 +357,21 @@ class SpecProcessorManager {
 						 }
 					}
 					if ($foundSchema) { 
-						 $this->logOrEcho('Processed: '.$pathFrag.$fileName."\n");
+						$this->logOrEcho('Processed: '.$pathFrag.$fileName."\n");
+						if($this->keepOrig){
+							$fileName = substr($filePath,strrpos($filePath,'/')).'.orig_'.time();
+							if(!file_exists($this->targetPathBase.$this->targetPathFrag.'orig_xml')){
+								mkdir($this->targetPathBase.$this->targetPathFrag.'orig_xml');
+							}
+							if(!rename($filePath,$this->targetPathBase.$this->targetPathFrag.'orig_xml'.$fileName)){
+								$this->logOrEcho("\tERROR: unable to move (".$filePath.") \n");
+							}
+						 } else {
+							if(!unlink($filePath)){
+								$this->logOrEcho("\tERROR: unable to delete file (".$filePath.") \n");
+							}
+						}
+
 					} 
 					else { 
 						 $this->logOrEcho("\tERROR: Unable to match ".$pathFrag.$fileName." to a known schema.\n");
