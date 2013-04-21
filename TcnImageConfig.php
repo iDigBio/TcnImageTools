@@ -94,7 +94,7 @@ $collArr = array(
 	,'tenn:bryophytes' => array('pmterm' => '/^(TENN-B-\d{7})\D*/', 'collid' => 15)
 	,'tenn:lichens' => array('pmterm' => '/^(TENN-L-\d{7})\D*/', 'collid' => 31)
 	,'tenn:mycology' => array('pmterm' => '/^TENN\s*(\d{6}[A-Z]{0,1})\D*/', 'collid' => 7)
-	,'ttu:scan' => array('pmterm' => '/^(TTU-Z_\d)\D*/', 'collid' => 7)
+	,'ttu:scan' => array('pmterm' => '/^(TTU-Z_\d{6})\D*/', 'collid' => 7)
 	,'uc:lichens' => array('pmterm' => '/^(UC\d{7})\D*/', 'collid' => 36)
 	,'uc:mycology' => array('pmterm' => '/^(UC\d{5,7})\D*/', 'collid' => 17)
 	,'vsc:bryophytes' => array('pmterm' => '/(VSC-L\d{5})\D*/', 'collid' => 13)
