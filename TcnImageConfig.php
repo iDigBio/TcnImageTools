@@ -99,7 +99,7 @@ $collArr = array(
 	,'tenn:mycology' => array('pmterm' => '/^TENN\s*(\d{6}[A-Z]{0,1})\D*/', 'collid' => 7)
 	,'ttu:scan' => array('pmterm' => '/^(TTU-Z_\d{6})\D*/', 'collid' => 7)
 	,'uaic:scan' => array('pmterm' => '/^(UAIC\d{7})\D*/', 'collid' => 11)
-	,'uc:lichens' => array('pmterm' => '/^(UC\d{7})\D*/', 'collid' => 36)
+	,'uc:lichens' => array('pmterm' => '/^(UC\d{5,7})\D*/', 'collid' => 36)
 	,'uc:mycology' => array('pmterm' => '/^(UC\d{5,7})\D*/', 'collid' => 17)
 	,'vsc:bryophytes' => array('pmterm' => '/(VSC-L\d{5})\D*/', 'collid' => 13)
 	,'vt:bryophytes' => array('pmterm' => '/(UVMVT\d{4,6})\D*/i', 'collid' => 9)
