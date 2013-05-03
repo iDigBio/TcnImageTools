@@ -61,7 +61,7 @@ $collArr = array(
 	,'colo:bryophytes' => array('pmterm' => '/^(COLO-B-\d{7})\D*/', 'collid' => 23)
 	,'conn:bryophytes' => array('pmterm' => '/^(CONN\d{8})\D*/', 'collid' => 30)
 	,'conn:lichens' => array('pmterm' => '/^(CONN\d{8})\D*/', 'collid' => 49)
-	,'dbg:mycology' => array('pmterm' => '/^(\d{1,5}[A-Z]{0,1})\D*/', 'collid' => 1) 
+	,'dbg:mycology' => array('pmterm' => '/^(DBG-F-\d{6})\D*/', 'collid' => 1) 
 	,'duke:bryophytes' => array('pmterm' => '/^(\d{7})\D*/', 'collid' => 6)
 	,'duke:lichens' => array('pmterm' => '/^(\d{7})\D*/', 'collid' => 28)
 	,'f:bryophytes' => array('pmterm' => '/^(C\d{7}F)\D*/', 'collid' => 1)
