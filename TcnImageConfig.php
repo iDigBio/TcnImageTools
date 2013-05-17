@@ -95,6 +95,7 @@ $collArr = array(
 	,'os:bryophytes' => array('pmterm' => '/^OS\d{7}\D*/', 'collid' => 19)
 	,'os:lichens' => array('pmterm' => '/^OS\d{7}\D*/', 'collid' => 38)
 	,'sfsu:mycology' => array('pmterm' => '/^(SFSU-F-\d{6}[A-Z]{0,1})\D*/', 'collid' => 18)
+	,'srp:bryophytes' => array('pmterm' => '/^(SRP-B-\d{7})\D*/', 'collid' => 35)
 	,'srp:lichens' => array('pmterm' => '/^(SRP-L-\d{7})\D*/', 'collid' => 23)
 	,'tenn:bryophytes' => array('pmterm' => '/^(TENN-B-\d{7})\D*/', 'collid' => 15)
 	,'tenn:lichens' => array('pmterm' => '/^(TENN-L-\d{7})\D*/', 'collid' => 31)
