@@ -324,7 +324,7 @@ class SpecProcessorManager {
 						 if ($xml->isValid() && $isLapi) {
 							  // File complies with the Aluka/LAPI/GPI schema
 							  $this->logOrEcho('Processing GPI batch file: '.$pathFrag.$fileName."\n");
-							  if (class_exists(GPIProcessor)) { 
+							  if (class_exists('GPIProcessor')) { 
 									$processor = new GPIProcessor();
 									$result = $processor->process($this->sourcePathBase.$pathFrag.$fileName);
 									$foundSchema = $result->couldparse;
@@ -350,7 +350,7 @@ class SpecProcessorManager {
 						 if ($hasAnnotation && $hasDataAnnotation && $hasdwcFP) {
 							  // File is likely an annotation containing DarwinCore data.
 							  $this->logOrEcho('Processing RDF/XML annotation file: '.$pathFrag.$fileName."\n");
-							  if (class_exists(NEVPProcessor)) { 
+							  if (class_exists('NEVPProcessor')) { 
 									$processor = new NEVPProcessor();
 									$result = $processor->process($this->sourcePathBase.$pathFrag.$fileName);
 									$foundSchema = $result->couldparse;
@@ -368,7 +368,7 @@ class SpecProcessorManager {
 						$this->logOrEcho("Proccessed $pathFrag$fileName, records: $result->recordcount, success: $result->successcount, failures: $result->failurecount, inserts: $result->insertcount, updates: $result->updatecount.\n");
 						if($this->keepOrig){
 							$oldFile = $this->sourcePathBase.$pathFrag.$fileName;
-							$newFileName = substr($filePath,strrpos($filePath,'/')).'orig_'.time().'.'.$fileName;
+							$newFileName = substr($pathFrag,strrpos($pathFrag,'/')).'orig_'.time().'.'.$fileName;
 							if(!file_exists($this->targetPathBase.$this->targetPathFrag.'orig_xml')){
 								mkdir($this->targetPathBase.$this->targetPathFrag.'orig_xml');
 							}
