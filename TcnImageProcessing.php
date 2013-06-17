@@ -214,19 +214,23 @@ class SpecProcessorManager {
 				$this->processFolder($this->targetPathFrag);
 			}
 			$this->logOrEcho('Image upload complete for '.$this->targetPathFrag."\n");
-			$this->logOrEcho("-----------------------------------------------------\n\n");
 			
 			//Close connection or MD output file
 			if($this->dbMetadata){
 				//Update Statistics
-				if(!$this->conn->query('CALL UpdateCollectionStats('.$this->collId.')')){
-					echo 'ERROR: unable to update collection stats; '.$this->conn->error;
+				if($this->conn->query('CALL UpdateCollectionStats('.$this->collId.')')){
+					$this->logOrEcho("Stats successfully updated for collection\n");
+				}
+				else{
+					$this->logOrEcho('ERROR: unable to update collection stats; '.$this->conn->error."\n");
 				}
 				if(!($this->conn === false)) $this->conn->close();
 			}
 			else{
 				fclose($this->mdOutputFH);
 			}
+			
+			$this->logOrEcho("-----------------------------------------------------\n\n");
 		}
 		//Now lets start closing things up
 		//First some data maintenance
@@ -620,7 +624,7 @@ class SpecProcessorManager {
 				$rs->free();
 			}
 			else{
-				echo 'SQL: '.$sql;
+				$this->logOrEcho("ABORT: unable run SQL to obtain collectionName\n");
 				exit('ABORT: unable run SQL to obtain collectionName');
 			}
 		}
