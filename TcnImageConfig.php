@@ -82,7 +82,7 @@ $collArr = array(
 	,'mont:lichens' => array('pmterm' => '/^(MONT-L-\d{7})\D*/', 'collid' => 42)
 	,'montu:mycology' => array('pmterm' => '/^(MONTU-F-\d{6})\D*/', 'collid' => 28)
 	,'mor:lichens' => array('pmterm' => '/^(L-\d{7}-MOR)/', 'collid' => 48)
-	,'msc:bryophytes' => array('pmterm' => '/^(MSC\d{7})\D*/', 'collid' => 16)
+	,'msc:bryophytes' => array('pmterm' => '/^(MSC\D{0,3}\d{7})\D*/', 'collid' => 16)
 	,'ncu:bryophytes' => array('pmterm' => '/^(NCU-B-\d{7})\D*/', 'collid' => 26)
 	,'ncu:mycology' => array('pmterm' => '/^(NCU-F-\d{7})\D*/', 'collid' => 14)
 	,'neb:bryophytes' => array('pmterm' => '/(NEB\d{8})\D*/', 'collid' => 34)
