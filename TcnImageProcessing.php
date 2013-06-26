@@ -110,7 +110,7 @@ class SpecProcessorManager {
 		if($this->logPath && file_exists($this->logPath)){
 			$logFile = $this->logPath."log_".date('Ymd').".log";
 			$this->logFH = fopen($logFile, 'a');
-			$this->logOrEcho("\nDateTime: ".date('Y-m-d h:i:s A')."\n");
+			$this->logOrEcho("\nDateTime: ".date('Y-m-d h:i:s A'));
 		}
 		
 		//Variable used in path to store original files
@@ -125,7 +125,7 @@ class SpecProcessorManager {
 			if($this->dbMetadata){
 				$this->conn = MySQLiConnectionFactory::getCon($collName);
 				if(!$this->conn){
-					$this->logOrEcho("Image upload aborted: Unable to establish connection to ".$collName." database\n");
+					$this->logOrEcho("Image upload aborted: Unable to establish connection to ".$collName." database");
 					exit("ABORT: Image upload aborted: Unable to establish connection to ".$collName." database");
 				}
 			}
@@ -134,11 +134,11 @@ class SpecProcessorManager {
 				$this->mdOutputFH = fopen($mdFileName, 'w');
 				fwrite($this->mdOutputFH, '"collid","dbpk","url","thumbnailurl","originalurl"'."\n");
 				if($this->mdOutputFH){
-					$this->logOrEcho("Image Metadata written out to CSV file: '".$mdFileName."' (same folder as script)\n");
+					$this->logOrEcho("Image Metadata written out to CSV file: '".$mdFileName."' (same folder as script)");
 				}
 				else{
 					//If unable to create output file, abort upload procedure
-					$this->logOrEcho("Image upload aborted: Unable to establish connection to output file to where image metadata is to be written\n");
+					$this->logOrEcho("Image upload aborted: Unable to establish connection to output file to where image metadata is to be written");
 					exit("ABORT: Image upload aborted: Unable to establish connection to output file to where image metadata is to be written");
 				}
 			}
@@ -168,14 +168,14 @@ class SpecProcessorManager {
 			
 			//Target path maintenance and verification
 			if(!file_exists($this->targetPathBase)){
-				$this->logOrEcho("ABORT: targetPathBase does not exist \n");
+				$this->logOrEcho("ABORT: targetPathBase does not exist ");
 				exit("ABORT: targetPathBase does not exist");
 			}
 			//Build targetPathFrag and create the target folders if they already don't exist
 			foreach($aArr as $v){
 				if(!file_exists($this->targetPathBase.$v)){
 					if(!mkdir($this->targetPathBase.$v)){
-						$this->logOrEcho("ERROR: unable to create new folder (".$this->targetPathBase.$v.") \n");
+						$this->logOrEcho("ERROR: unable to create new folder (".$this->targetPathBase.$v.") ");
 						exit("ABORT: unable to create new folder (".$this->targetPathBase.$v.")");
 					}
 				}
@@ -185,14 +185,14 @@ class SpecProcessorManager {
 			$this->targetPathFrag .= $collName.'/';
 			if(!file_exists($this->targetPathBase.$this->targetPathFrag)){
 				if(!mkdir($this->targetPathBase.$this->targetPathFrag)){
-					$this->logOrEcho("ERROR: unable to create new folder (".$this->targetPathBase.$this->targetPathFrag.") \n");
+					$this->logOrEcho("ERROR: unable to create new folder (".$this->targetPathBase.$this->targetPathFrag.") ");
 					exit("ABORT: unable to create new folder (".$this->targetPathBase.$this->targetPathFrag.")");
 				}
 			}
 
 			//Source path maintenance and verification
 			if(!file_exists($this->sourcePathBase)){
-				$this->logOrEcho("ABORT: sourcePathBase does not exist \n");
+				$this->logOrEcho("ABORT: sourcePathBase does not exist ");
 				exit("ABORT: sourcePathBase does not exist");
 			}
 			
@@ -209,28 +209,24 @@ class SpecProcessorManager {
 			}
 			
 			//Lets start processing folder
-			$this->logOrEcho('Starting image processing: '.$this->targetPathFrag."\n");
+			$this->logOrEcho('Starting image processing: '.$this->targetPathFrag);
 			if(file_exists($this->targetPathBase.$this->targetPathFrag)){
 				$this->processFolder($this->targetPathFrag);
 			}
-			$this->logOrEcho('Image upload complete for '.$this->targetPathFrag."\n");
+			$this->logOrEcho('Image upload complete for '.$this->targetPathFrag);
 			
 			//Close connection or MD output file
 			if($this->dbMetadata){
 				//Update Statistics
-				if($this->conn->query('CALL UpdateCollectionStats('.$this->collId.')')){
-					$this->logOrEcho("Stats successfully updated for collection\n");
-				}
-				else{
-					$this->logOrEcho('ERROR: unable to update collection stats; '.$this->conn->error."\n");
-				}
+				$this->updateCollectionStats();
+
 				if(!($this->conn === false)) $this->conn->close();
 			}
 			else{
 				fclose($this->mdOutputFH);
 			}
 			
-			$this->logOrEcho("-----------------------------------------------------\n\n");
+			$this->logOrEcho("-----------------------------------------------------\n");
 		}
 		//Now lets start closing things up
 		//First some data maintenance
@@ -248,16 +244,16 @@ class SpecProcessorManager {
 			}
 		}
 		//Close log file
-		$this->logOrEcho("Image upload process finished! (".date('Y-m-d h:i:s A').") \n");
-		$this->logOrEcho("----------------------------\n\n");
+		$this->logOrEcho("Image upload process finished! (".date('Y-m-d h:i:s A').") ");
+		$this->logOrEcho("----------------------------\n");
 	}
 
 	private function processFolder($pathFrag = ''){
 		set_time_limit(2000);
-		//$this->logOrEcho("Processing: ".$this->sourcePathBase.$pathFrag." \n");
+		//$this->logOrEcho("Processing: ".$this->sourcePathBase.$pathFrag);
 		//Read file and loop through images
 		if(!file_exists($this->sourcePathBase.$pathFrag)){
-			$this->logOrEcho("\tSource path does not exist: ".$this->sourcePathBase.$pathFrag." \n");
+			$this->logOrEcho("\tSource path does not exist: ".$this->sourcePathBase.$pathFrag);
 			exit("ABORT: Source path does not exist: ".$this->sourcePathBase.$pathFrag);
 		}
 		if($imgFH = opendir($this->sourcePathBase.$pathFrag)){
@@ -265,7 +261,7 @@ class SpecProcessorManager {
 				if($fileName != "." && $fileName != ".." && $fileName != ".svn"){
 					if(is_file($this->sourcePathBase.$pathFrag.$fileName)){
 						if(stripos($fileName,'_tn.jpg') === false && stripos($fileName,'_lg.jpg') === false){
-							$this->logOrEcho("Processing File: ".$fileName." \n");
+							$this->logOrEcho("Processing File: ".$fileName);
 							$fileExt = strtolower(substr($fileName,strrpos($fileName,'.')));
 							if($fileExt == ".jpg"){
 								$this->processImageFile($fileName,$pathFrag);
@@ -282,7 +278,7 @@ class SpecProcessorManager {
 								$this->processXMLFile($fileName,$pathFrag);
 							}
 							else{
-								$this->logOrEcho("\tERROR: File skipped, not a supported image file: ".$fileName." \n");
+								$this->logOrEcho("\tERROR: File skipped, not a supported image file: ".$fileName);
 							}
 						}
 					}
@@ -293,7 +289,7 @@ class SpecProcessorManager {
 			}
 		}
 		else{
-			$this->logOrEcho("\tERROR: unable to access source directory: ".$this->sourcePathBase.$pathFrag." \n");
+			$this->logOrEcho("\tERROR: unable to access source directory: ".$this->sourcePathBase.$pathFrag);
 		}
 		if($imgFH) closedir($imgFH);
 	}
@@ -313,7 +309,7 @@ class SpecProcessorManager {
 			  $foundSchema = false;
 			  $xml = XMLReader::open($this->sourcePathBase.$pathFrag.$fileName);
 			  if($xml->read())  {
-					// $this->logOrEcho($fileName." first node: ". $xml->name . "\n");
+					// $this->logOrEcho($fileName." first node: ". $xml->name);
 					if ($xml->name=="DataSet") {	 
 						 $xml = XMLReader::open($this->sourcePathBase.$pathFrag.$fileName);
 						 $lapischema = $this->serverRoot . "/collections/admin/schemas/lapi_schema_v2.xsd";
@@ -322,30 +318,30 @@ class SpecProcessorManager {
 							  $isLapi = $xml->setSchema($lapischema);
 						 } 
 						 else { 
-							  $this->logOrEcho("\tERROR: Can't find $lapischema\n");
+							  $this->logOrEcho("\tERROR: Can't find $lapischema");
 						 }
-						 // $this->logOrEcho($fileName." valid lapi xml:" . $xml->isValid() . " [" . $isLapi .  "]\n");
+						 // $this->logOrEcho($fileName." valid lapi xml:" . $xml->isValid() . " [" . $isLapi .  "]");
 						 if ($xml->isValid() && $isLapi) {
 							  // File complies with the Aluka/LAPI/GPI schema
-							  $this->logOrEcho('Processing GPI batch file: '.$pathFrag.$fileName."\n");
+							  $this->logOrEcho('Processing GPI batch file: '.$pathFrag.$fileName);
 							  if (class_exists('GPIProcessor')) { 
 									$processor = new GPIProcessor();
 									$result = $processor->process($this->sourcePathBase.$pathFrag.$fileName);
 									$foundSchema = $result->couldparse;
 									if (!$foundSchema || $result->failurecount>0) {
-										$this->logOrEcho("\tERROR: Errors processing $fileName: $result->errors.\n");
+										$this->logOrEcho("\tERROR: Errors processing $fileName: $result->errors.");
 									}
 							  } 
 							  else { 
 									// fail gracefully if this instalation isn't configured with this parser.
-									$this->logOrEcho("\tERROR: SpecProcessorGPI.php not available.\n");
+									$this->logOrEcho("\tERROR: SpecProcessorGPI.php not available.");
 							  }
 						 }
 					}
 					elseif ($xml->name=="rdf:RDF") { 
-						 // $this->logOrEcho($fileName." has oa:" . $xml->lookupNamespace("oa"). "\n");
-						 // $this->logOrEcho($fileName." has oad:" . $xml->lookupNamespace("oad"). "\n");
-						 // $this->logOrEcho($fileName." has dwcFP:" . $xml->lookupNamespace("dwcFP"). "\n");
+						 // $this->logOrEcho($fileName." has oa:" . $xml->lookupNamespace("oa"));
+						 // $this->logOrEcho($fileName." has oad:" . $xml->lookupNamespace("oad"));
+						 // $this->logOrEcho($fileName." has dwcFP:" . $xml->lookupNamespace("dwcFP"));
 						 $hasAnnotation = $xml->lookupNamespace("oa");
 						 $hasDataAnnotation = $xml->lookupNamespace("oad");
 						 $hasdwcFP = $xml->lookupNamespace("dwcFP");
@@ -353,23 +349,23 @@ class SpecProcessorManager {
 						 // returns the namespace string not a boolean.
 						 if ($hasAnnotation && $hasDataAnnotation && $hasdwcFP) {
 							  // File is likely an annotation containing DarwinCore data.
-							  $this->logOrEcho('Processing RDF/XML annotation file: '.$pathFrag.$fileName."\n");
+							  $this->logOrEcho('Processing RDF/XML annotation file: '.$pathFrag.$fileName);
 							  if (class_exists('NEVPProcessor')) { 
 									$processor = new NEVPProcessor();
 									$result = $processor->process($this->sourcePathBase.$pathFrag.$fileName);
 									$foundSchema = $result->couldparse;
 									if (!$foundSchema || $result->failurecount>0) {
-										$this->logOrEcho("\tERROR: Errors processing $fileName: $result->errors.\n");
+										$this->logOrEcho("\tERROR: Errors processing $fileName: $result->errors.");
 									}
 							  }
 							  else { 
 									// fail gracefully if this instalation isn't configured with this parser.
-									$this->logOrEcho("\tERROR: SpecProcessorNEVP.php not available.\n");
+									$this->logOrEcho("\tERROR: SpecProcessorNEVP.php not available.");
 							  }
 						 }
 					}
 					if ($foundSchema>0) { 
-						$this->logOrEcho("Proccessed $pathFrag$fileName, records: $result->recordcount, success: $result->successcount, failures: $result->failurecount, inserts: $result->insertcount, updates: $result->updatecount.\n");
+						$this->logOrEcho("Proccessed $pathFrag$fileName, records: $result->recordcount, success: $result->successcount, failures: $result->failurecount, inserts: $result->insertcount, updates: $result->updatecount.");
 						if($this->keepOrig){
 							$oldFile = $this->sourcePathBase.$pathFrag.$fileName;
 							$newFileName = substr($pathFrag,strrpos($pathFrag,'/')).'orig_'.time().'.'.$fileName;
@@ -377,27 +373,27 @@ class SpecProcessorManager {
 								mkdir($this->targetPathBase.$this->targetPathFrag.'orig_xml');
 							}
 							if(!rename($oldFile,$this->targetPathBase.$this->targetPathFrag.'orig_xml/'.$newFileName)){
-								$this->logOrEcho("\tERROR: unable to move (".$fileName.") \n");
+								$this->logOrEcho("\tERROR: unable to move (".$fileName.") ");
 							}
 						 } 
 						 else {
 							if(!unlink($oldFile)){
-								$this->logOrEcho("\tERROR: unable to delete file (".$fileName.") \n");
+								$this->logOrEcho("\tERROR: unable to delete file (".$fileName.") ");
 							}
 						}
 					} 
 					else { 
-						 $this->logOrEcho("\tERROR: Unable to match ".$pathFrag.$fileName." to a known schema.\n");
+						 $this->logOrEcho("\tERROR: Unable to match ".$pathFrag.$fileName." to a known schema.");
 					}
 			  } 
 			  else { 
-					$this->logOrEcho("\tERROR: XMLReader couldn't read ".$pathFrag.$fileName."\n");
+					$this->logOrEcho("\tERROR: XMLReader couldn't read ".$pathFrag.$fileName);
 			  }
 		 }
 	}
 
 	private function processImageFile($fileName,$pathFrag = ''){
-		$this->logOrEcho("Processing image (".date('Y-m-d h:i:s A')."): ".$fileName."\n");
+		$this->logOrEcho("Processing image (".date('Y-m-d h:i:s A')."): ".$fileName);
 		//ob_flush();
 		flush();
 		//Grab Primary Key from filename
@@ -416,7 +412,7 @@ class SpecProcessorManager {
 				$targetPath = $this->targetPathBase.$this->targetPathFrag.$targetFolder;
 				if(!file_exists($targetPath)){
 					if(!mkdir($targetPath)){
-						$this->logOrEcho("ERROR: unable to create new folder (".$targetPath.") \n");
+						$this->logOrEcho("ERROR: unable to create new folder (".$targetPath.") ");
 					}
 				}
 				$targetFileName = $fileName;
@@ -448,7 +444,7 @@ class SpecProcessorManager {
 				}
 				//Start the processing procedure
 				list($width, $height) = getimagesize($this->sourcePathBase.$pathFrag.$fileName);
-				$this->logOrEcho("\tLoading image (".date('Y-m-d h:i:s A').")\n");
+				$this->logOrEcho("\tLoading image (".date('Y-m-d h:i:s A').")");
 				//ob_flush();
 				flush();
 				
@@ -461,7 +457,7 @@ class SpecProcessorManager {
 					$webImgCreated = copy($this->sourcePathBase.$pathFrag.$fileName,$targetPath.$targetFileName);
 				}
 				if($webImgCreated){
-					$this->logOrEcho("\tWeb image copied to target folder (".date('Y-m-d h:i:s A').") \n");
+					$this->logOrEcho("\tWeb image copied to target folder (".date('Y-m-d h:i:s A').") ");
 					$tnUrl = "";$lgUrl = "";
 					//Create Large Image
 					$lgTargetFileName = substr($targetFileName,0,strlen($targetFileName)-4)."_lg.jpg";
@@ -521,13 +517,13 @@ class SpecProcessorManager {
 								unlink($this->sourcePathBase.$pathFrag.$fileName);
 							}
 						}
-						$this->logOrEcho("\tImage processed successfully (".date('Y-m-d h:i:s A').")!\n");
+						$this->logOrEcho("\tImage processed successfully (".date('Y-m-d h:i:s A').")!");
 					}
 				}
 			}
 		}
 		else{
-			$this->logOrEcho("File skipped (".$pathFrag.$fileName."), unable to extract specimen identifier\n");
+			$this->logOrEcho("File skipped (".$pathFrag.$fileName."), unable to extract specimen identifier");
 		}
 		//ob_flush();
 		flush();
@@ -547,7 +543,7 @@ class SpecProcessorManager {
 		}
 		else{
 			// Neither ImageMagick nor GD are installed
-			$this->logOrEcho("\tFATAL ERROR: No appropriate image handler for image conversions\n");
+			$this->logOrEcho("\tFATAL ERROR: No appropriate image handler for image conversions");
 			exit("ABORT: No appropriate image handler for image conversions");
 		}
 		return $status;
@@ -602,7 +598,7 @@ class SpecProcessorManager {
 		}
 		
 		if(!$status){
-			$this->logOrEcho("\tERROR: Unable to resize and write file: ".$targetPath."\n");
+			$this->logOrEcho("\tERROR: Unable to resize and write file: ".$targetPath);
 		}
 		
 		imagedestroy($tmpImg);
@@ -624,7 +620,7 @@ class SpecProcessorManager {
 				$rs->free();
 			}
 			else{
-				$this->logOrEcho("ABORT: unable run SQL to obtain collectionName\n");
+				$this->logOrEcho("ABORT: unable run SQL to obtain collectionName");
 				exit('ABORT: unable run SQL to obtain collectionName');
 			}
 		}
@@ -673,11 +669,11 @@ class SpecProcessorManager {
 				'VALUES('.$this->collId.',"'.$specPk.'","unprocessed")';
 			if($this->conn->query($sql2)){
 				$occId = $this->conn->insert_id;
-				$this->logOrEcho("\tSpecimen record does not exist; new empty specimen record created and assigned an 'unprocessed' status (occid = ".$occId.") \n");
+				$this->logOrEcho("\tSpecimen record does not exist; new empty specimen record created and assigned an 'unprocessed' status (occid = ".$occId.") ");
 			} 
 		}
 		if(!$occId){
-			$this->logOrEcho("\tERROR: File skipped, unable to locate specimen record ".$specPk." (".date('Y-m-d h:i:s A').") \n");
+			$this->logOrEcho("\tERROR: File skipped, unable to locate specimen record ".$specPk." (".date('Y-m-d h:i:s A').") ");
 		}
 		return $occId;
 	}
@@ -696,7 +692,7 @@ class SpecProcessorManager {
 	private function databaseImage($occId,$webUrl,$tnUrl,$oUrl){
 		$status = true;
 		if($occId && is_numeric($occId)){
-			$this->logOrEcho("\tPreparing to load record into database\n");
+			$this->logOrEcho("\tPreparing to load record into database");
 			//Check to see if image url already exists for that occid
 			$imgId = 0;$exTnUrl = '';$exLgUrl = '';
 			$sql = 'SELECT imgid, thumbnailurl, originalurl '.
@@ -735,18 +731,18 @@ class SpecProcessorManager {
 			}
 			else{
 				$status = false;
-				$this->logOrEcho("\tERROR: Unable to load image record into database: ".$this->conn->error."; SQL: ".$sql."\n");
+				$this->logOrEcho("\tERROR: Unable to load image record into database: ".$this->conn->error."; SQL: ".$sql);
 			}
 			if($imgId){
-				$this->logOrEcho("\tWARNING: Existing image record replaced; occid: $occId \n");
+				$this->logOrEcho("\tWARNING: Existing image record replaced; occid: $occId ");
 			}
 			else{
-				$this->logOrEcho("\tSUCCESS: Image record loaded into database\n");
+				$this->logOrEcho("\tSUCCESS: Image record loaded into database");
 			}
 		}
 		else{
 			$status = false;
-			$this->logOrEcho("ERROR: Missing occid (omoccurrences PK), unable to load record \n");
+			$this->logOrEcho("ERROR: Missing occid (omoccurrences PK), unable to load record ");
 		}
 		//ob_flush();
 		flush();
@@ -762,7 +758,7 @@ class SpecProcessorManager {
 	}
 	
 	private function processSkeletalFile($filePath){
-		$this->logOrEcho("\tPreparing to load Skeletal file into database\n");
+		$this->logOrEcho("\tPreparing to load Skeletal file into database");
 		$fh = fopen($filePath,'r');
 		$hArr = array();
 		if($fh){
@@ -796,11 +792,11 @@ class SpecProcessorManager {
 					$delimiter = "csv";
 				}
 				else{
-					$this->logOrEcho("\tERROR: Unable to identify delimiter for metadata file \n");
+					$this->logOrEcho("\tERROR: Unable to identify delimiter for metadata file ");
 				}
 			}
 			else{
-				$this->logOrEcho("\tERROR: Skeletal file skipped: unable to determine file type \n");
+				$this->logOrEcho("\tERROR: Skeletal file skipped: unable to determine file type ");
 			}
 			if($hArr){
 				//Clean and finalize header array
@@ -1026,8 +1022,8 @@ class SpecProcessorManager {
 											$this->dataLoaded = 1;
 										}
 										else{
-											$this->logOrEcho("ERROR: Unable to update existing record with new skeletal record \n");
-											$this->logOrEcho("\tSQL : $sqlUpdate \n");
+											$this->logOrEcho("ERROR: Unable to update existing record with new skeletal record ");
+											$this->logOrEcho("\tSQL : $sqlUpdate ");
 										}
 									}
 								}
@@ -1084,8 +1080,8 @@ class SpecProcessorManager {
 									}
 									else{
 										if($this->logFH){
-											$this->logOrEcho("ERROR: Unable to load new skeletal record \n");
-											$this->logOrEcho("\tSQL : $sqlIns \n");
+											$this->logOrEcho("ERROR: Unable to load new skeletal record ");
+											$this->logOrEcho("\tSQL : $sqlIns ");
 										}
 									}
 								}
@@ -1096,8 +1092,8 @@ class SpecProcessorManager {
 								$sqlExs ='INSERT INTO omexsiccatiocclink(omenid,occid) VALUES('.$recMap['omenid'].','.$occid.')';
 								if(!$this->conn->query($sqlExs)){
 									if($this->logFH){
-										$this->logOrEcho("ERROR: Unable to link record to exsiccati (".$recMap['omenid'].'-'.$occid.") \n");
-										$this->logOrEcho("\tSQL : $sqlExs \n");
+										$this->logOrEcho("ERROR: Unable to link record to exsiccati (".$recMap['omenid'].'-'.$occid.") ");
+										$this->logOrEcho("\tSQL : $sqlExs ");
 									}
 								}
 							}
@@ -1106,10 +1102,10 @@ class SpecProcessorManager {
 					}
 				}
 				else{
-					$this->logOrEcho("\tERROR: Failed to locate catalognumber MD within file (".$filePath."),  \n");
+					$this->logOrEcho("\tERROR: Failed to locate catalognumber MD within file (".$filePath."),  ");
 				}
 			}
-			$this->logOrEcho("\tSkeletal file loaded \n");
+			$this->logOrEcho("\tSkeletal file loaded ");
 			fclose($fh);
 			if($this->keepOrig){
 				$fileName = substr($filePath,strrpos($filePath,'/')).'.orig_'.time();
@@ -1117,16 +1113,16 @@ class SpecProcessorManager {
 					mkdir($this->targetPathBase.$this->targetPathFrag.'orig_skeletal');
 				}
 				if(!rename($filePath,$this->targetPathBase.$this->targetPathFrag.'orig_skeletal'.$fileName)){
-					$this->logOrEcho("\tERROR: unable to move (".$filePath.") \n");
+					$this->logOrEcho("\tERROR: unable to move (".$filePath.") ");
 				}
 			} else {
 				if(!unlink($filePath)){
-					$this->logOrEcho("\tERROR: unable to delete file (".$filePath.") \n");
+					$this->logOrEcho("\tERROR: unable to delete file (".$filePath.") ");
 				}
 			}
 		}
 		else{
-			$this->logOrEcho("ERROR: Can't open skeletal file ".$filePath." \n");
+			$this->logOrEcho("ERROR: Can't open skeletal file ".$filePath." ");
 		}
 	}
 
@@ -1142,6 +1138,111 @@ class SpecProcessorManager {
 		}
 		return $recordArr;
 	}
+	
+	private function updateCollectionStats(){
+		#Update family
+		$sql = 'UPDATE omoccurrences o '.
+			'SET o.family = o.sciname '.
+			'WHERE o.family IS NULL AND (o.sciname LIKE "%aceae" OR o.sciname LIKE "%idae")';
+		if(!$this->conn->query($sql)){
+			$this->logOrEcho('ERROR: unable to update family; '.$this->conn->error);
+		}
+
+		$sql = 'UPDATE omoccurrences o '. 
+			'SET o.sciname = o.genus '.
+			'WHERE o.genus IS NOT NULL AND o.sciname IS NULL';
+		if(!$this->conn->query($sql)){
+			$this->logOrEcho('ERROR: unable to update sciname using genus; '.$this->conn->error);
+		}
+		
+		$sql = 'UPDATE omoccurrences o '. 
+			'SET o.sciname = o.family '.
+			'WHERE o.family IS NOT NULL AND o.sciname IS NULL';
+		if(!$this->conn->query($sql)){
+			$this->logOrEcho('ERROR: unable to update sciname using family; '.$this->conn->error);
+		}
+		
+		#Link new occurrence records to taxon table
+		$sql = 'UPDATE omoccurrences o INNER JOIN taxa t ON o.sciname = t.sciname '. 
+			'SET o.TidInterpreted = t.tid '. 
+			'WHERE o.TidInterpreted IS NULL';
+		if(!$this->conn->query($sql)){
+			$this->logOrEcho('ERROR: unable to update tidinterpreted; '.$this->conn->error);
+		}
+
+		#Update specimen image taxon links
+		$sql = 'UPDATE omoccurrences o INNER JOIN images i ON o.occid = i.occid '. 
+			'SET i.tid = o.tidinterpreted '. 
+			'WHERE o.tidinterpreted IS NOT NULL AND (i.tid IS NULL OR o.tidinterpreted <> i.tid)';
+		if(!$this->conn->query($sql)){
+			$this->logOrEcho('ERROR: unable to update image tid field; '.$this->conn->error);
+		}
+		
+		#Updating records with null families
+		$sql = 'UPDATE omoccurrences o INNER JOIN taxstatus ts ON o.tidinterpreted = ts.tid '. 
+			'SET o.family = ts.family '. 
+			'WHERE ts.taxauthid = 1 AND ts.family <> "" AND ts.family IS NOT NULL AND (o.family IS NULL OR o.family = "")';
+		if(!$this->conn->query($sql)){
+			$this->logOrEcho('ERROR: unable to update family in omoccurrence table; '.$this->conn->error);
+		}
+
+		#Updating records with null author
+		$sql = 'UPDATE omoccurrences o INNER JOIN taxa t ON o.tidinterpreted = t.tid '. 
+			'SET o.scientificNameAuthorship = t.author '. 
+			'WHERE o.scientificNameAuthorship IS NULL and t.author is not null';
+		if(!$this->conn->query($sql)){
+			$this->logOrEcho('ERROR: unable to update author; '.$this->conn->error);
+		}
+
+		#Updating total record count
+		$sql = 'UPDATE omcollectionstats cs '. 
+			'SET cs.recordcnt = (SELECT Count(o.occid) FROM omoccurrences o WHERE (o.collid = '.$this->collId.')) '. 
+			'WHERE cs.collid = '.$this->collId.'';
+		if(!$this->conn->query($sql)){
+			$this->logOrEcho('ERROR: unable to update record counts; '.$this->conn->error);
+		}
+		
+		#Updating family count
+		$sql = 'UPDATE omcollectionstats cs '. 
+			'SET cs.familycnt = (SELECT COUNT(DISTINCT o.family) '. 
+			'FROM omoccurrences o WHERE (o.collid = '.$this->collId.')) '. 
+			'WHERE cs.collid = '.$this->collId.'';
+		if(!$this->conn->query($sql)){
+			$this->logOrEcho('ERROR: unable to update family counts; '.$this->conn->error);
+		}
+		
+		#Updating genus count
+		$sql = 'UPDATE omcollectionstats cs '. 
+			'SET cs.genuscnt = (SELECT COUNT(DISTINCT t.unitname1) '. 
+			'FROM taxa t INNER JOIN omoccurrences o ON t.tid = o.tidinterpreted '. 
+			'WHERE (o.collid = '.$this->collId.') AND t.rankid >= 180) '. 
+			'WHERE cs.collid = '.$this->collId.'';
+		if(!$this->conn->query($sql)){
+			$this->logOrEcho('ERROR: unable to update genus counts; '.$this->conn->error);
+		}
+		
+		#Updating species count
+		$sql = 'UPDATE omcollectionstats cs '. 
+			'SET cs.speciescnt = (SELECT count(DISTINCT t.unitname1, t.unitname2) AS spcnt '. 
+			'FROM taxa t INNER JOIN omoccurrences o ON t.tid = o.tidinterpreted '. 
+			'WHERE (o.collid = '.$this->collId.') AND t.rankid >= 220) '. 
+			'WHERE cs.collid = '.$this->collId.'';
+		if(!$this->conn->query($sql)){
+			$this->logOrEcho('ERROR: unable to update species count; '.$this->conn->error);
+		}
+		
+		#Updating georeference count
+		$sql = 'UPDATE omcollectionstats cs '. 
+			'SET cs.georefcnt = (SELECT Count(o.occid) FROM omoccurrences o WHERE (o.DecimalLatitude Is Not Null) '. 
+			'AND (o.DecimalLongitude Is Not Null) AND (o.CollID = '.$this->collId.')) '. 
+			'WHERE cs.collid = '.$this->collId.'';
+		if(!$this->conn->query($sql)){
+			$this->logOrEcho('ERROR: unable to update georeference count; '.$this->conn->error);
+		}
+
+		$this->logOrEcho("Stats update completed");
+	}
+	
 
 	//Set and Get functions
 	public function setCollArr($cArr){
@@ -1149,7 +1250,7 @@ class SpecProcessorManager {
 			$this->collArr = $cArr;
 		}
 		else{
-			$this->logOrEcho("Error: collection array does not exist\n");
+			$this->logOrEcho("Error: collection array does not exist");
 			exit("ABORT: collection array does not exist");
 		}
 	}
@@ -1475,7 +1576,7 @@ class SpecProcessorManager {
 	private function logOrEcho($str){
 		if(!$this->silent){
 			if($this->logFH){
-				fwrite($this->logFH,$str);
+				fwrite($this->logFH,$str."\n");
 			} else {
 				echo $str;
 			}	
