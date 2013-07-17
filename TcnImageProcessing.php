@@ -267,6 +267,7 @@ class SpecProcessorManager {
 								$this->processImageFile($fileName,$pathFrag);
 							}
 							elseif($fileExt == ".tif"){
+								$this->logOrEcho("\tERROR: File skipped, TIFFs image files are not a supported: ".$fileName);
 								//Do something, like convert to jpg???
 								//but for now do nothing
 							}
@@ -276,6 +277,9 @@ class SpecProcessorManager {
 							}
 							elseif($fileExt==".xml") {
 								$this->processXMLFile($fileName,$pathFrag);
+							}
+							elseif($fileExt==".DS_Store"){
+								unlink($this->sourcePathBase.$pathFrag.$fileName);
 							}
 							else{
 								$this->logOrEcho("\tERROR: File skipped, not a supported image file: ".$fileName);
