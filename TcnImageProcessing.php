@@ -797,10 +797,12 @@ class SpecProcessorManager {
 				}
 				else{
 					$this->logOrEcho("\tERROR: Unable to identify delimiter for metadata file ");
+					return false;
 				}
 			}
 			else{
 				$this->logOrEcho("\tERROR: Skeletal file skipped: unable to determine file type ");
+				return false;
 			}
 			if($hArr){
 				//Clean and finalize header array
@@ -823,25 +825,34 @@ class SpecProcessorManager {
 					$rsMap = $this->conn->query($sqlMap);
 					while($rMap = $rsMap->fetch_object()){
 						$field = strtolower($rMap->Field);
-						if($field != "initialTimestamp" && $field != "occid" && $field != "collid" && $field != 'catalognumber'){
-							if(in_array($field,$headerArr)){
-								$type = $rMap->Type;
-								if(strpos($type,"double") !== false || strpos($type,"int") !== false || strpos($type,"decimal") !== false){
-									$symbMap[$field]["type"] = "numeric";
-								}
-								elseif(strpos($type,"date") !== false){
-									$symbMap[$field]["type"] = "date";
-								}
-								else{
-									$symbMap[$field]["type"] = "string";
-									if(preg_match('/\(\d+\)$/', $type, $matches)){
-										$symbMap[$field]["size"] = substr($matches[0],1,strlen($matches[0])-2);
-									}
+						if(in_array($field,$headerArr)){
+							$type = $rMap->Type;
+							if(strpos($type,"double") !== false || strpos($type,"int") !== false || strpos($type,"decimal") !== false){
+								$symbMap[$field]["type"] = "numeric";
+							}
+							elseif(strpos($type,"date") !== false){
+								$symbMap[$field]["type"] = "date";
+							}
+							else{
+								$symbMap[$field]["type"] = "string";
+								if(preg_match('/\(\d+\)$/', $type, $matches)){
+									$symbMap[$field]["size"] = substr($matches[0],1,strlen($matches[0])-2);
 								}
 							}
 						}
 					}
-
+					//Remove field that shouldn't be loaded
+					unset($symbMap['datelastmodified']);
+					unset($symbMap['occid']);
+					unset($symbMap['collid']);
+					unset($symbMap['catalognumber']);
+					unset($symbMap['institutioncode']);
+					unset($symbMap['collectioncode']);
+					unset($symbMap['dbpk']);
+					unset($symbMap['processingstatus']);
+					unset($symbMap['observeruid']);
+					unset($symbMap['tidinterpreted']);
+					
 					//Add exsiccati titles and numbers to $symbMap
 					$symbMap['ometid']['type'] = "numeric";
 					$symbMap['exsiccatititle']['type'] = "string";
@@ -946,13 +957,14 @@ class SpecProcessorManager {
 							$deltaCatNum = $this->getPrimaryKey($catNum);
 							if ($deltaCatNum!='') { $catNum = $deltaCatNum; } 
 		
-							//Check to see if matching record already exists in database
+							//Remove exsiccati fields 
 							$activeFields = array_keys($recMap);
 							if(array_search('ometid',$activeFields) !== false) unset($activeFields[array_search('ometid',$activeFields)]);
 							if(array_search('omenid',$activeFields) !== false) unset($activeFields[array_search('omenid',$activeFields)]);
 							if(array_search('exsiccatititle',$activeFields) !== false) unset($activeFields[array_search('exsiccatititle',$activeFields)]);
 							if(array_search('exsiccatinumber',$activeFields) !== false) unset($activeFields[array_search('exsiccatinumber',$activeFields)]);
-
+							
+							//Check to see if matching record already exists in database
 							$sql = 'SELECT occid'.(!array_key_exists('occurrenceremarks',$recMap)?',occurrenceremarks':'').
 								($activeFields?','.implode(',',$activeFields):'').' '.
 								'FROM omoccurrences WHERE collid = '.$this->collId.' AND (catalognumber = '.(is_numeric($catNum)?$catNum:'"'.$catNum.'"').') ';
@@ -1040,9 +1052,8 @@ class SpecProcessorManager {
 									foreach($activeFields as $aField){
 										$sqlIns1 .= ','.$aField;
 										$value = $this->cleanString($recMap[$aField]);
-										$fMap = $symbMap[$aField];
-										$type = (array_key_exists('type',$fMap)?$fMap['type']:'string');
-										$size = (array_key_exists('size',$fMap)?$fMap['size']:0);
+										$type = (array_key_exists('type',$symbMap[$aField])?$symbMap[$aField]['type']:'string');
+										$size = (array_key_exists('size',$symbMap[$aField])?$symbMap[$aField]['size']:0);
 										if($type == 'numeric'){
 											if(is_numeric($value)){
 												$sqlIns2 .= ",".$value;
@@ -1107,6 +1118,7 @@ class SpecProcessorManager {
 				}
 				else{
 					$this->logOrEcho("\tERROR: Failed to locate catalognumber MD within file (".$filePath."),  ");
+					return false;
 				}
 			}
 			$this->logOrEcho("\tSkeletal file loaded ");
