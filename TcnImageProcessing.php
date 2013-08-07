@@ -271,7 +271,7 @@ class SpecProcessorManager {
 								//Do something, like convert to jpg???
 								//but for now do nothing
 							}
-							elseif(($fileExt == ".csv" || $fileExt == ".txt" || $fileExt == ".tab" || $fileExt == ".dat") && (stripos($fileName,'metadata') !== false || stripos($fileName,'skelet') !== false)){
+							elseif(($fileExt == ".csv" || $fileExt == ".txt" || $fileExt == ".tab" || $fileExt == ".dat")){
 								//Is skeletal file exists. Append data to database records
 								$this->processSkeletalFile($this->sourcePathBase.$pathFrag.$fileName); 
 							}
@@ -809,6 +809,7 @@ class SpecProcessorManager {
 				$headerArr = array();
 				foreach($hArr as $field){
 					$fieldStr = strtolower(trim($field));
+					if($fieldStr == 'exsnumber') $fieldStr = 'exsiccatinumber'; 
 					if($fieldStr){
 						$headerArr[] = $fieldStr;
 					}
