@@ -278,7 +278,7 @@ class SpecProcessorManager {
 							elseif($fileExt==".xml") {
 								$this->processXMLFile($fileName,$pathFrag);
 							}
-							elseif($fileExt==".DS_Store"){
+							elseif($fileExt==".ds_store"){
 								unlink($this->sourcePathBase.$pathFrag.$fileName);
 							}
 							else{
