@@ -115,6 +115,7 @@ $collArr = array(
 	,'vsc:bryophytes' => array('pmterm' => '/(VSC-L\d{5})\D*/', 'collid' => 13)
 	,'vt:bryophytes' => array('pmterm' => '/(UVMVT\d{4,6})\D*/i', 'collid' => 9)
 	,'vt:lichens' => array('pmterm' => '/(UVMVT\d{6})\D*/i', 'collid' => 39)
+	,'wis:bryophytes' => array('pmterm' => '/^(WIS-B-\d{7})\D*/', 'collid' => 44)
 	,'wis:lichens' => array('pmterm' => '/^(WIS-L-\d{7})\D*/', 'collid' => 22)
 	,'wtu:bryophytes' => array('pmterm' => '/^(WTU-B-\d{6})\D*/', 'collid' => 8)
 	,'wtu:lichens' => array('pmterm' => '/^(WTU-L-\d{6})\D*/', 'collid' => 21)
