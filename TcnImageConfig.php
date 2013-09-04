@@ -76,6 +76,8 @@ $collArr = array(
 	,'flas:bryophytes' => array('pmterm' => '/^(FLAS\s{1}B\d{1,7})\D*/', 'collid' => 14)
 	,'flas:lichens' => array('pmterm' => '/^(FLAS\s{1}L\d{1,7})\D*/', 'collid' => 35)
 	,'flas:mycology' => array('pmterm' => '/^(FLAS-F-\d{5})\D*/', 'collid' => 13) 
+	,'ftg:bryophytes' => array('pmterm' => '/^(FTG\s{1}\d{1,7})\D*/', 'collid' => 39)
+	,'ftg:lichens' => array('pmterm' => '/^(FTG\s{1}\d{1,7})\D*/', 'collid' => 55)
 	,'ill:bryophytes' => array('pmterm' => '/^(ILL\d{8})\D*/', 'collid' => 20)
 	,'ill:lichens' => array('pmterm' => '/^(ILL\d{8})\D*/', 'collid' => 60)
 	,'lsu:bryophytes' => array('pmterm' => '/^(LSU\d{8})\D*/', 'collid' => 18)
