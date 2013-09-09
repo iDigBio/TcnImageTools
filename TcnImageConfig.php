@@ -115,6 +115,8 @@ $collArr = array(
 	,'uaic:scan' => array('pmterm' => '/^(UAIC\d{7})\D*/', 'collid' => 11)
 	,'uc:lichens' => array('pmterm' => '/^(UC\d{5,7})\D*/', 'collid' => 36)
 	,'uc:mycology' => array('pmterm' => '/^(UC\d{5,7})\D*/', 'collid' => 17)
+	,'urv:bryophytes' => array('pmterm' => '/(URV\d{6})\D*/i', 'collid' => 45)
+	,'urv:lichens' => array('pmterm' => '/(URV\d{6})\D*/i', 'collid' => 61)
 	,'vsc:bryophytes' => array('pmterm' => '/(VSC-L\d{5})\D*/', 'collid' => 13)
 	,'vt:bryophytes' => array('pmterm' => '/(UVMVT\d{4,6})\D*/i', 'collid' => 9)
 	,'vt:lichens' => array('pmterm' => '/(UVMVT\d{6})\D*/i', 'collid' => 39)
